@@ -1,7 +1,7 @@
 
-import React, { ReactNode, useEffect } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Home, FileText, Printer, LogOut } from 'lucide-react';
+import { Home, FileText, Printer, LogOut, Menu } from 'lucide-react';
 import Logo from './ui/Logo';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -72,7 +72,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <SidebarProvider>
       <div className="flex min-h-screen bg-gray-50">
-        <Sidebar className="border-r border-fiscal-green-700/30 shadow-lg">
+        <Sidebar>
           <SidebarHeader>
             <div className="flex items-center px-4 py-3">
               <Logo />
@@ -80,14 +80,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
           </SidebarHeader>
           
-          <SidebarContent className="bg-[#0A451F] rounded-r-lg">
+          <SidebarContent>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton 
                   asChild 
                   isActive={isActive('/dashboard')}
                   tooltip="Início"
-                  className="hover:bg-fiscal-green-800 data-[active=true]:bg-fiscal-green-700"
                 >
                   <Link to="/dashboard">
                     <Home size={18} />
@@ -101,7 +100,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   asChild 
                   isActive={isActive('/notes/new')}
                   tooltip="Nova Nota"
-                  className="hover:bg-fiscal-green-800 data-[active=true]:bg-fiscal-green-700"
                 >
                   <Link to="/notes/new">
                     <FileText size={18} />
@@ -115,7 +113,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   asChild 
                   isActive={isActive('/print')}
                   tooltip="Impressão"
-                  className="hover:bg-fiscal-green-800 data-[active=true]:bg-fiscal-green-700"
                 >
                   <Link to="/print">
                     <Printer size={18} />
@@ -126,13 +123,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </SidebarMenu>
           </SidebarContent>
           
-          <SidebarFooter className="bg-[#0A451F] rounded-br-lg">
+          <SidebarFooter>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton 
                   onClick={handleLogout}
                   tooltip="Sair"
-                  className="hover:bg-fiscal-green-800 data-[active=true]:bg-fiscal-green-700"
                 >
                   <LogOut size={18} />
                   <span>Sair</span>
@@ -143,7 +139,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </Sidebar>
         
         <div className="flex flex-col flex-1">
-          <header className="bg-[#0A451F] text-white py-2 px-4 md:hidden flex items-center rounded-b-lg">
+          <header className="bg-black text-white py-2 px-4 md:hidden flex items-center">
             <SidebarTrigger className="mr-2" />
             <Logo />
             <h1 className="ml-3 text-xl font-cascadia">Fiscal Flow Notes</h1>
@@ -154,7 +150,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               {children}
             </main>
             
-            <footer className="bg-[#0A451F] text-white py-4 text-center rounded-t-lg">
+            <footer className="bg-black text-white py-4 text-center">
               <div className="container mx-auto">
                 <p className="text-sm">
                   © {new Date().getFullYear()} Fiscal Flow Notes. Todos os direitos reservados.
