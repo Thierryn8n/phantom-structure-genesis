@@ -14,7 +14,7 @@ import NewNote from "./pages/NewNote";
 import Print from "./pages/Print";
 import NotFound from "./pages/NotFound";
 
-// Create auth context
+// Create auth context with proper typing
 export const AuthContext = createContext<{
   user: User | null;
   session: Session | null;
@@ -56,11 +56,11 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   return isAuthenticated ? <>{children}</> : <Navigate to="/" replace />;
 };
 
-const queryClient = new QueryClient();
-
+// Define App as a proper React functional component
 const App = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const queryClient = new QueryClient();
 
   useEffect(() => {
     // Set up auth state listener first
