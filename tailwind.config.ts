@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -81,14 +80,14 @@ export default {
           },
         },
         sidebar: {
-          DEFAULT: "hsl(var(--sidebar-background))",
-          foreground: "hsl(var(--sidebar-foreground))",
-          primary: "hsl(var(--sidebar-primary))",
-          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
-          accent: "hsl(var(--sidebar-accent))",
-          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
-          border: "hsl(var(--sidebar-border))",
-          ring: "hsl(var(--sidebar-ring))",
+          DEFAULT: "#0A451F",
+          foreground: "#FFFFFF",
+          primary: "#16853D",
+          "primary-foreground": "#FFFFFF",
+          accent: "#10652E",
+          "accent-foreground": "#FFFFFF",
+          border: "#16853D50",
+          ring: "#22C55E",
         },
       },
       fontFamily: {
