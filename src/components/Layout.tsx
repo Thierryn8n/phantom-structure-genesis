@@ -1,24 +1,61 @@
 
-import React, { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import React, { ReactNode, useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Menu, Home, FileText, Printer, LogOut } from 'lucide-react';
 import Logo from './ui/Logo';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface LayoutProps {
   children: ReactNode;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  // Check for authentication
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
+        navigate('/');
+      }
+    };
+    
+    checkAuth();
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        navigate('/');
+      }
+    });
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  const handleLogout = () => {
-    // For now, just removing the token from localStorage
-    localStorage.removeItem('fiscalFlowToken');
-    window.location.href = '/';
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: 'Logout realizado com sucesso',
+        description: 'Você foi desconectado do sistema.',
+      });
+      navigate('/');
+    } catch (error) {
+      toast({
+        title: 'Erro ao fazer logout',
+        description: 'Ocorreu um erro ao tentar desconectar.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -80,7 +117,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               Impressão
             </MobileNavLink>
             <button
-              onClick={handleLogout}
+              onClick={() => {
+                handleLogout();
+                toggleMobileMenu();
+              }}
               className="flex items-center w-full text-left text-white hover:bg-fiscal-gray-800 px-4 py-2"
             >
               <LogOut size={18} className="mr-2" />

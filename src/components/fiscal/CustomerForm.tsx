@@ -45,7 +45,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerDataChange }) => 
       setCustomerData(prev => ({
         ...prev,
         [parent]: {
-          ...prev[parent as keyof typeof prev],
+          ...(prev[parent as keyof typeof prev] as Record<string, string>),
           [child]: value
         }
       }));
@@ -57,9 +57,21 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onCustomerDataChange }) => 
     }
     
     // Update parent component with new data
+    const updatedData = name.includes('.')
+      ? {
+          ...customerData,
+          address: {
+            ...customerData.address,
+            [name.split('.')[1]]: value
+          }
+        }
+      : {
+          ...customerData,
+          [name]: value
+        };
+    
     onCustomerDataChange({
-      ...customerData,
-      [name]: value,
+      ...updatedData,
       signature
     });
   };

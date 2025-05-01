@@ -1,18 +1,23 @@
 
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import LoginForm from '@/components/auth/LoginForm';
+import AuthForm from '@/components/auth/AuthForm';
 import Logo from '@/components/ui/Logo';
+import { supabase } from '@/integrations/supabase/client';
 
 const Index: React.FC = () => {
   const navigate = useNavigate();
   
   // Check if the user is already logged in
   useEffect(() => {
-    const token = localStorage.getItem('fiscalFlowToken');
-    if (token) {
-      navigate('/dashboard');
-    }
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        navigate('/dashboard');
+      }
+    };
+    
+    checkSession();
   }, [navigate]);
 
   return (
@@ -30,13 +35,13 @@ const Index: React.FC = () => {
         <div className="w-full max-w-md mx-auto">
           <div className="card">
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-cascadia">Login</h2>
+              <h2 className="text-2xl font-cascadia">Acesso ao Sistema</h2>
               <p className="text-fiscal-gray-600 mt-2">
-                Acesse sua conta compartilhada para gerenciar suas notas fiscais
+                Faça login ou cadastre-se para gerenciar suas notas fiscais
               </p>
             </div>
             
-            <LoginForm />
+            <AuthForm />
           </div>
           
           <div className="mt-8 text-center">
