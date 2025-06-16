@@ -1,9 +1,9 @@
-
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthForm from '@/components/auth/AuthForm';
 import Logo from '@/components/ui/Logo';
 import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Index: React.FC = () => {
   const navigate = useNavigate();
@@ -21,62 +21,36 @@ const Index: React.FC = () => {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-fiscal-gray-50">
-      <header className="bg-black text-white py-6">
-        <div className="container mx-auto flex justify-center">
-          <div className="flex items-center">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-green-50 to-emerald-50 p-4 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2UyZThmMCIgb3BhY2l0eT0iMC4yIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')]">
+      <div className="max-w-md w-full">
+        <div className="text-center mb-8">
+          <div className="flex justify-center mb-2">
             <Logo />
-            <h1 className="ml-3 text-2xl font-cascadia">Fiscal Flow Notes</h1>
           </div>
-        </div>
-      </header>
-      
-      <main className="flex-grow flex flex-col items-center justify-center p-6">
-        <div className="w-full max-w-md mx-auto">
-          <div className="card">
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-cascadia">Acesso ao Sistema</h2>
-              <p className="text-fiscal-gray-600 mt-2">
-                Faça login ou cadastre-se para gerenciar suas notas fiscais
-              </p>
-            </div>
-            
-            <AuthForm />
-          </div>
-          
-          <div className="mt-8 text-center">
-            <div className="flex items-center justify-center mb-4">
-              <div className="w-10 h-10 bg-fiscal-green-500 rounded-full flex items-center justify-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="w-5 h-5 text-white"
-                >
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                </svg>
-              </div>
-            </div>
-            <h3 className="font-cascadia text-lg mb-2">Acesso Seguro e Simplificado</h3>
-            <p className="text-fiscal-gray-600 text-sm">
-              A conta compartilhada permite que múltiplos vendedores trabalhem simultaneamente,
-              gerando notas fiscais de orçamento a partir de dispositivos móveis.
-            </p>
-          </div>
-        </div>
-      </main>
-      
-      <footer className="bg-black text-white py-3 text-center">
-        <div className="container mx-auto">
-          <p className="text-sm">
-            © {new Date().getFullYear()} Fiscal Flow Notes. Todos os direitos reservados.
+          <h1 className="text-3xl font-bold text-gray-800">Bem-vindo ao Fiscal Flow</h1>
+          <p className="text-gray-600 mt-2">
+            Acesse sua conta ou crie uma nova para gerenciar seus pedidos, acompanhar entregas e muito mais.
           </p>
         </div>
-      </footer>
+        
+        <Card className="border-gray-200 shadow-xl rounded-xl">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold text-center">
+              Acesso ao Sistema
+            </CardTitle>
+            <CardDescription className="text-center">
+              Entre com suas credenciais ou crie uma nova conta.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AuthForm />
+          </CardContent>
+        </Card>
+        
+        <div className="mt-8 text-center text-sm text-gray-500">
+          <p>© {new Date().getFullYear()} Fiscal Flow. Todos os direitos reservados.</p>
+        </div>
+        </div>
     </div>
   );
 };

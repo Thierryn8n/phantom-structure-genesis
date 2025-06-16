@@ -1,0 +1,33 @@
+INSTRUÇÕES PARA CRIAR O ÍCONE DO APLICATIVO
+
+Para que o instalador funcione corretamente, você precisa criar um ícone para o aplicativo 
+seguindo estas instruções:
+
+1. OPÇÃO 1: CRIAR ÍCONE COM CONVERSOR ONLINE
+   - Crie uma imagem de 256x256 pixels com o logotipo do Fiscal Flow
+   - Acesse um site de conversão para ICO como https://convertico.com/ ou https://icoconvert.com/
+   - Faça upload da sua imagem e converta para o formato ICO
+   - Salve o arquivo como "icon.ico" nesta pasta (assets)
+
+2. OPÇÃO 2: USAR ÍCONE DE AMOSTRA (TEMPORÁRIO)
+   - No computador onde você está criando o instalador, abra o PowerShell como administrador
+   - Execute o seguinte comando para criar um ícone padrão:
+
+```powershell
+Add-Type -AssemblyName System.Drawing
+$icon = [System.Drawing.Icon]::ExtractAssociatedIcon("C:\Windows\System32\notepad.exe")
+$icon.ToBitmap().Save("icon.png", [System.Drawing.Imaging.ImageFormat]::Png)
+```
+
+   - Agora, use um conversor online para transformar esse PNG em ICO
+   - Salve o arquivo como "icon.ico" nesta pasta (assets)
+
+IMPORTANTE:
+- O arquivo deve ser nomeado exatamente "icon.ico"
+- O arquivo deve estar na pasta "assets"
+- Sem o ícone, os atalhos criados pelo instalador não terão um ícone visual
+
+Se você já tem um arquivo ICO pronto:
+1. Renomeie-o para "icon.ico"
+2. Coloque-o nesta pasta (assets)
+3. Pronto para usar! 

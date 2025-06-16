@@ -1,0 +1,576 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { useReactToPrint } from 'react-to-print';
+import ProductSelector, { SelectedProduct } from './ProductSelector';
+import CustomerForm, { CustomerData } from './CustomerForm';
+import PaymentForm, { PaymentData } from './PaymentForm';
+import PrintableNote from './PrintableNote';
+import { Printer, Save, ArrowLeft, Check, Clock, FileText, Smartphone, ChevronDown, ChevronUp, Info } from 'lucide-react';
+import { useDeviceDetect } from '@/hooks/useDeviceDetect';
+import { PrintService } from '@/services/printService';
+import { useAuth } from '@/contexts/AuthContext';
+import { NotesService } from '@/services/notesService';
+import { CustomersService } from '@/services/customersService';
+import { FiscalNote, NoteStatus } from '@/types/FiscalNote';
+
+const FiscalNoteForm: React.FC = () => {
+  const { toast } = useToast();
+  const [products, setProducts] = useState<SelectedProduct[]>([]);
+  const [customerData, setCustomerData] = useState<CustomerData>({
+    name: '',
+    address: {
+      street: '',
+      number: '',
+      neighborhood: '',
+      city: '',
+      state: '',
+      zipCode: '',
+    },
+    phone: '',
+  });
+  const [paymentData, setPaymentData] = useState<PaymentData>({
+    method: 'cash',
+    installments: 1,
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Reference to save customer method
+  const saveCustomerRef = useRef<(() => void) | null>(null);
+  
+  // State for mobile accordion sections
+  const [productsExpanded, setProductsExpanded] = useState(true);
+  const [customerExpanded, setCustomerExpanded] = useState(false);
+  const [paymentExpanded, setPaymentExpanded] = useState(false);
+  
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const printableNoteRef = useRef<HTMLDivElement>(null);
+  const { isMobile, isDesktop } = useDeviceDetect();
+  const { user } = useAuth();
+  
+  // Default printer configuration
+  const defaultPrinter = "HP DESKJET 2700 SERIES";
+  
+  // Generate a random note number
+  const noteNumber = useRef(`${new Date().getFullYear()}${String(Math.floor(Math.random() * 10000)).padStart(5, '0')}`);
+  
+  // Current date
+  const currentDate = new Date().toLocaleDateString();
+  
+  // Calculate total value
+  const totalValue = products.reduce((sum, product) => 
+    sum + product.quantity * product.price, 0);
+  
+  // Check if form is complete
+  const isFormComplete = products.length > 0 && customerData.name.trim() !== '';
+  
+  // Functions to toggle accordion sections
+  const toggleProductsSection = () => setProductsExpanded(!productsExpanded);
+  const toggleCustomerSection = () => setCustomerExpanded(!customerExpanded);
+  const togglePaymentSection = () => setPaymentExpanded(!paymentExpanded);
+  
+  // Toggle preview mode
+  const togglePreviewMode = () => {
+    if (!isFormComplete) {
+      toast({
+        title: 'Informações incompletas',
+        description: 'Por favor, preencha os dados do cliente e adicione produtos antes de prosseguir.',
+        variant: 'warning',
+      });
+      return;
+    }
+    
+    // Save customer data if callback exists
+    if (saveCustomerRef.current) {
+      saveCustomerRef.current();
+    }
+    
+    setIsPreviewMode(!isPreviewMode);
+  };
+  
+  // Adicionar estado para armazenar o ID da nota
+  const noteId = useRef<string | undefined>(undefined);
+  
+  // Função para salvar cliente automaticamente se não tiver sido salvo explicitamente
+  const ensureCustomerSaved = async (): Promise<boolean> => {
+    if (!user || !customerData.name || !customerData.phone) {
+      return false;
+    }
+
+    try {
+      // Tentar salvar explicitamente primeiro
+      let customerSaved = false;
+      if (saveCustomerRef.current) {
+        try {
+          await saveCustomerRef.current();
+          customerSaved = true;
+          console.log('Cliente salvo explicitamente');
+        } catch (error) {
+          console.error('Erro ao salvar cliente explicitamente:', error);
+        }
+      }
+
+      // Se não foi salvo explicitamente, salvar automaticamente
+      if (!customerSaved) {
+        console.log('Tentando salvar cliente automaticamente...');
+        const savedCustomer = await CustomersService.findOrCreateCustomer({
+          name: customerData.name,
+          phone: customerData.phone,
+          address: customerData.address,
+          signature: customerData.signature,
+          ownerId: user.id
+        });
+
+        if (savedCustomer) {
+          console.log('Cliente salvo automaticamente com sucesso:', savedCustomer);
+          return true;
+        }
+      }
+
+      return customerSaved;
+    } catch (error) {
+      console.error('Erro ao garantir que o cliente seja salvo:', error);
+      return false;
+    }
+  };
+  
+  // Modificar a função handleSave para usar o NotesService
+  const handleSave = async () => {
+    if (!user) {
+      toast({
+        title: 'Erro',
+        description: 'Você precisa estar logado para salvar o orçamento.',
+        variant: 'error',
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Tentar salvar o cliente primeiro (explicitamente ou automaticamente)
+      await ensureCustomerSaved();
+      
+      // Preparar dados da nota
+      const noteData: FiscalNote = {
+        noteNumber: noteNumber.current,
+        date: currentDate,
+        products: products.map(product => ({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          quantity: product.quantity,
+          unit: product.unit || 'un'
+        })),
+        customerData: {
+          name: customerData.name,
+          address: customerData.address,
+          phone: customerData.phone,
+          email: customerData.email || undefined
+        },
+        paymentData: {
+          method: paymentData.method,
+          installments: paymentData.installments,
+          dueDate: paymentData.dueDate || undefined,
+          observation: paymentData.observation || undefined
+        },
+        totalValue,
+        status: 'draft' as NoteStatus,
+        ownerId: user.id,
+        sellerId: user.id, // Por padrão, o vendedor é o usuário atual
+        sellerName: user.user_metadata?.name || user.email
+      };
+      
+      // Salvar a nota no Supabase
+      const savedNote = await NotesService.saveNote(noteData);
+      
+      if (savedNote) {
+        toast({
+          title: 'Orçamento salvo',
+          description: 'O orçamento foi salvo com sucesso.',
+          variant: 'success'
+        });
+        
+        // Atualizar o ID da nota se for uma nova nota
+        if (savedNote.id) {
+          noteId.current = savedNote.id;
+        }
+      } else {
+        throw new Error('Não foi possível salvar o orçamento');
+      }
+    } catch (error: any) {
+      console.error('Erro ao salvar orçamento:', error);
+      toast({
+        title: 'Erro ao salvar',
+        description: error.message || 'Ocorreu um erro ao salvar o orçamento.',
+        variant: 'error',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  // Modificar a função handlePrint para marcar como impressa no Supabase
+  const handlePrintAfterSave = async () => {
+    // Primeiro salvamos a nota
+    await handleSave();
+    
+    // Verificamos se temos o ID da nota salva
+    if (!noteId.current) {
+      toast({
+        title: 'Erro',
+        description: 'É necessário salvar o orçamento antes de imprimir.',
+        variant: 'error',
+      });
+      return;
+    }
+    
+    // Atualizar o status para 'issued' antes de imprimir
+    try {
+      const updated = await NotesService.updateNoteStatus(
+        noteId.current,
+        'issued',
+        user?.id || ''
+      );
+      
+      if (updated) {
+        // Continuar com a impressão
+        handlePrint();
+        
+        // Após a impressão bem-sucedida, marcar como impressa
+        setTimeout(async () => {
+          await NotesService.markAsPrinted(noteId.current || '', user?.id || '');
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar status da nota:', error);
+      // Ainda permitimos a impressão mesmo se falhar a atualização do status
+      handlePrint();
+    }
+  };
+  
+  // Função de impressão
+  const handlePrint = useReactToPrint({
+    content: () => printableNoteRef.current,
+    documentTitle: `Orçamento ${noteNumber.current}`,
+    onBeforeGetContent: () => {
+      return new Promise<void>((resolve) => {
+        resolve();
+      });
+    },
+    onAfterPrint: () => {
+      toast({
+        title: 'Impressão concluída',
+        description: 'O orçamento foi enviado para a impressora.',
+      });
+    }
+  });
+  
+  // Função para enviar solicitação de impressão para o PC
+  const handleSendToPrinter = async () => {
+    if (!user) {
+      toast({
+        title: 'Erro',
+        description: 'Você precisa estar logado para enviar para impressão.',
+        variant: 'error',
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Salvar cliente se necessário (explicitamente ou automaticamente)
+      await ensureCustomerSaved();
+      
+      // Preparar dados da nota
+      const noteData = {
+        noteNumber: noteNumber.current,
+        date: currentDate,
+        products,
+        customerData,
+        paymentData,
+        totalValue,
+      };
+      
+      // Enviar solicitação para impressão
+      const result = await PrintService.sendPrintRequest(
+        noteNumber.current,
+        noteData,
+        user.id
+      );
+      
+      if (result) {
+        toast({
+          title: 'Solicitação enviada',
+          description: 'Seu orçamento foi enviado para a fila de impressão e será impresso automaticamente no computador com a impressora configurada.',
+          duration: 5000,
+        });
+      } else {
+        throw new Error('Falha ao enviar solicitação de impressão');
+      }
+    } catch (error: any) {
+      console.error('Erro ao enviar para impressão:', error);
+      toast({
+        title: 'Erro ao enviar para impressão',
+        description: error.message || 'Ocorreu um erro ao enviar o orçamento para impressão.',
+        variant: 'error',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  // Auto-expand sections based on completion
+  useEffect(() => {
+    if (isMobile) {
+      if (products.length === 0) {
+        setProductsExpanded(true);
+        setCustomerExpanded(false);
+        setPaymentExpanded(false);
+      } else if (customerData.name.trim() === '') {
+        setProductsExpanded(false);
+        setCustomerExpanded(true);
+        setPaymentExpanded(false);
+      } else {
+        setProductsExpanded(false);
+        setCustomerExpanded(false);
+        setPaymentExpanded(true);
+      }
+    }
+  }, [products.length, customerData.name, isMobile]);
+  
+  // Função para configurar o ref do Customer Form
+  const setupCustomerFormRef = (ref: () => void) => {
+    saveCustomerRef.current = ref;
+  };
+  
+  // Handle printing button based on device type
+  const renderPrintButton = () => {
+    // Em dispositivo móvel, sempre mostra o botão para enviar ao PC
+    if (isMobile) {
+      return (
+        <button
+          onClick={handleSendToPrinter}
+          disabled={isSubmitting}
+          className="btn-primary rounded-full flex items-center justify-center px-3 sm:px-5 py-1.5 text-sm sm:text-base flex-grow sm:flex-grow-0"
+        >
+          <Smartphone size={16} className="mr-1" />
+          {isSubmitting ? 'Enviando...' : 'Enviar para impressão'}
+        </button>
+      );
+    }
+    
+    // Em desktop, mostra o botão de impressão direta
+    return (
+      <button
+        onClick={handlePrintAfterSave}
+        className="btn-primary rounded-full flex items-center px-5"
+      >
+        <Printer size={18} className="mr-1" />
+        Imprimir
+      </button>
+    );
+  };
+  
+  return isPreviewMode ? (
+    <div className="max-w-5xl mx-auto p-4">
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+        <div className="flex justify-between items-center mb-6">
+          <button 
+            onClick={togglePreviewMode}
+            className="text-gray-600 hover:text-gray-800 flex items-center"
+          >
+            <ArrowLeft size={18} className="mr-1" />
+            Voltar
+          </button>
+          <div className="flex space-x-3">
+            <button
+              onClick={handleSave}
+              disabled={isSubmitting}
+              className="bg-fiscal-green-500 hover:bg-fiscal-green-600 text-white px-5 py-2 rounded-full flex items-center"
+            >
+              <Save size={18} className="mr-1" />
+              {isSubmitting ? 'Salvando...' : 'Salvar'}
+            </button>
+            {renderPrintButton()}
+          </div>
+        </div>
+        
+        <PrintableNote 
+          ref={printableNoteRef}
+          noteNumber={noteNumber.current}
+          date={currentDate}
+          products={products}
+          customerData={customerData}
+          paymentData={paymentData}
+          totalValue={totalValue}
+        />
+      </div>
+    </div>
+  ) : (
+    <div className="max-w-7xl mx-auto p-4">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-800">Nova Nota Fiscal</h1>
+        <div className="flex space-x-2">
+          <button
+            onClick={handleSave}
+            disabled={isSubmitting}
+            className="btn-secondary rounded-full flex items-center px-4 py-2"
+          >
+            <Save size={16} className="mr-1" />
+            {isSubmitting ? 'Salvando...' : 'Salvar'}
+          </button>
+          <button
+            onClick={togglePreviewMode}
+            disabled={!isFormComplete}
+            className="btn-primary rounded-full flex items-center px-5 py-2"
+          >
+            <Printer size={16} className="mr-1" />
+            Visualizar
+          </button>
+        </div>
+      </div>
+      
+      {isMobile ? (
+        <div className="space-y-4">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div 
+              className="flex items-center justify-between p-3 bg-fiscal-green-50 cursor-pointer"
+              onClick={toggleProductsSection}
+            >
+              <div className="flex items-center gap-2">
+                <span className="bg-fiscal-green-500 text-white p-1.5 rounded-lg">
+                  <FileText size={16} />
+                </span>
+                <span className="font-medium">Produtos</span>
+              </div>
+              {productsExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            </div>
+            
+            {productsExpanded && (
+              <div className="p-3">
+                <ProductSelector 
+                  onProductsChange={setProducts} 
+                />
+              </div>
+            )}
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div 
+              className="flex items-center justify-between p-3 bg-fiscal-green-50 cursor-pointer"
+              onClick={toggleCustomerSection}
+            >
+              <div className="flex items-center gap-2">
+                <span className="bg-fiscal-green-500 text-white p-1.5 rounded-lg">
+                  <FileText size={16} />
+                </span>
+                <span className="font-medium">Dados do Cliente</span>
+              </div>
+              {customerExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            </div>
+            
+            {customerExpanded && (
+              <div className="p-3">
+                <CustomerForm 
+                  onCustomerDataChange={setCustomerData} 
+                  onSaveRef={setupCustomerFormRef}
+                />
+              </div>
+            )}
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div 
+              className="flex items-center justify-between p-3 bg-fiscal-green-50 cursor-pointer"
+              onClick={togglePaymentSection}
+            >
+              <div className="flex items-center gap-2">
+                <span className="bg-fiscal-green-500 text-white p-1.5 rounded-lg">
+                  <FileText size={16} />
+                </span>
+                <span className="font-medium">Pagamento</span>
+              </div>
+              {paymentExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            </div>
+            
+            {paymentExpanded && (
+              <div className="p-3">
+                <PaymentForm totalValue={totalValue} onPaymentDataChange={setPaymentData} />
+                
+                <div className="mt-6 flex justify-end">
+                  <button
+                    onClick={togglePreviewMode}
+                    disabled={!isFormComplete}
+                    className="bg-fiscal-green-500 hover:bg-fiscal-green-600 text-white px-4 py-2 rounded-lg flex items-center disabled:opacity-50"
+                  >
+                    <Printer size={18} className="mr-2" />
+                    Visualizar
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+            <h3 className="text-xl font-cascadia mb-4 flex items-center">
+              <span className="bg-fiscal-green-100 text-fiscal-green-700 p-1 rounded-lg mr-2">
+                <FileText size={18} />
+              </span>
+              Produtos
+            </h3>
+            <ProductSelector 
+              onProductsChange={setProducts} 
+            />
+          </div>
+        </div>
+        
+        <div className="lg:col-span-1">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+            <h3 className="text-xl font-cascadia mb-4 flex items-center">
+              <span className="bg-fiscal-green-100 text-fiscal-green-700 p-1 rounded-lg mr-2">
+                <FileText size={18} />
+              </span>
+              Dados do Cliente
+            </h3>
+            <CustomerForm 
+              onCustomerDataChange={setCustomerData} 
+              onSaveRef={setupCustomerFormRef}
+            />
+          </div>
+          
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <h3 className="text-xl font-cascadia mb-4 flex items-center">
+              <span className="bg-fiscal-green-100 text-fiscal-green-700 p-1 rounded-lg mr-2">
+                <FileText size={18} />
+              </span>
+              Pagamento
+            </h3>
+            <PaymentForm totalValue={totalValue} onPaymentDataChange={setPaymentData} />
+          </div>
+        </div>
+      </div>
+      
+      )}
+      
+      {/* Hidden printable component */}
+      <div className="hidden">
+        <PrintableNote
+          ref={printableNoteRef}
+          noteNumber={noteNumber.current}
+          date={currentDate}
+          products={products}
+          customerData={customerData}
+          paymentData={paymentData}
+          totalValue={totalValue}
+        />
+      </div>
+    </div>
+  );
+};
+
+export default FiscalNoteForm; 

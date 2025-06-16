@@ -1,191 +1,130 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
-
 export type Database = {
   public: {
     Tables: {
+      ecommerce_categories: {
+        Row: {
+          id: string;
+          name: string;
+          description?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          owner_id?: string;
+          image_url?: string | null;
+          icon?: string | null;
+        };
+      };
+      ecommerce_settings: {
+        Row: {
+          id: string;
+          name: string;
+          store_name?: string;
+          logo?: string;
+          logo_url?: string;
+          description?: string;
+          address?: string;
+          phone?: string;
+          email?: string;
+          banner_image_url?: string;
+          use_overlay_text?: boolean;
+          font_family?: string;
+          primary_color?: string;
+          secondary_color?: string;
+          accent_color?: string;
+          background_color?: string;
+          header_background_color?: string;
+          footer_background_color?: string;
+          button_style?: string;
+          border_radius?: number;
+          favicon_url?: string;
+          product_cards_per_row?: number;
+          show_product_ratings?: boolean;
+          show_discount_badge?: boolean;
+          display_product_quick_view?: boolean;
+          enable_wishlist?: boolean;
+          show_social_share_buttons?: boolean;
+          meta_keywords?: string;
+          payment_methods?: string[];
+          shipping_methods?: {
+            id: string;
+            name: string;
+            price: number;
+            description?: string;
+          }[];
+          footer_social_facebook?: string;
+          footer_social_instagram?: string;
+          footer_social_twitter?: string;
+          footer_social_linkedin?: string;
+          footer_social_youtube?: string;
+          created_at?: string;
+          updated_at?: string;
+          owner_id?: string;
+        };
+      };
       products: {
         Row: {
-          code: string
-          created_at: string | null
-          id: string
-          name: string
-          price: number
-          unit: string
-          user_id: string
-        }
-        Insert: {
-          code: string
-          created_at?: string | null
-          id?: string
-          name: string
-          price: number
-          unit: string
-          user_id: string
-        }
-        Update: {
-          code?: string
-          created_at?: string | null
-          id?: string
-          name?: string
-          price?: number
-          unit?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      profiles: {
+          id: string;
+          name: string;
+          code: string;
+          price: number;
+          description?: string;
+          image_path?: string;
+          imageUrl?: string;
+          ncm?: string;
+          unit?: string;
+          quantity?: number;
+          inStock?: boolean;
+          category?: string;
+          category_id?: string | null;
+          owner_id?: string;
+          created_at?: string;
+          updated_at?: string;
+          slug?: string;
+          additional_images?: string[];
+          stock?: number;
+        };
+      };
+      orders_kanban: {
         Row: {
-          created_at: string
-          full_name: string | null
-          id: string
-          phone: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          full_name?: string | null
-          id: string
-          phone?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          full_name?: string | null
-          id?: string
-          phone?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      [_ in never]: never
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-}
-
-type DefaultSchema = Database[Extract<keyof Database, "public">]
-
-export type Tables<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof Database },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
-    }
-    ? R
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
-
-export type TablesInsert<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
-    ? I
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
-
-export type TablesUpdate<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
-
-export type Enums<
-  DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof Database },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
-> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
-
-export type CompositeTypes<
-  PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof Database },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
-
-export const Constants = {
-  public: {
-    Enums: {},
-  },
-} as const
+          id: string;
+          product_id: string;
+          product_name: string;
+          customer_id: string;
+          customer_name: string;
+          seller_id: string;
+          seller_name: string;
+          status: string;
+          notes?: string;
+          created_at: string;
+          updated_at: string;
+          total_amount?: number;
+          owner_id: string;
+        };
+      };
+      product_reviews: {
+        Row: {
+          id: string;
+          product_id: string;
+          user_id?: string | null;
+          author_name: string;
+          rating: number;
+          comment: string;
+          created_at: string;
+          updated_at: string;
+        };
+      };
+      customers: {
+        Row: {
+          id: string;
+          name: string;
+          phone: string;
+          email?: string | null;
+          address?: any;
+          signature?: string | null;
+          owner_id: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+    };
+  };
+}; 

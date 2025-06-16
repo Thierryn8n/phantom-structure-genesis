@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -68,12 +67,17 @@ const AuthForm: React.FC = () => {
         
         setMode('login');
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email: values.email,
           password: values.password,
         });
 
         if (error) throw error;
+
+        // Configurar o ID do usuário no localStorage
+        if (data && data.user) {
+          localStorage.setItem('default_user_id', data.user.id);
+        }
 
         toast({
           title: 'Login efetuado com sucesso!',

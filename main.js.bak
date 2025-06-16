@@ -1,0 +1,352 @@
+// Fiscal Flow Printer - versão corrigida
+const { app, BrowserWindow, Tray, Menu, dialog, shell, nativeImage } = require('electron');
+const path = require('path');
+const Store = require('electron-store');
+const { createClient } = require('@supabase/supabase-js');
+const ThermalPrinter = require('node-thermal-printer').printer;
+const PrinterTypes = require('node-thermal-printer').types;
+const fs = require('fs');
+const { exec } = require('child_process');
+
+// Armazenamento local para configurações
+const store = new Store();
+
+// Variáveis globais
+let tray = null;
+let win = null;
+let supabase = null;
+let subscription = null;
+let printerName = store.get('printerName') || '';
+const defaultPrinterName = 'HP DESKJET 2700 SERIES'; // Impressora padrão recomendada
+
+// Função para obter impressoras do sistema
+function getSystemPrinters(callback) {
+  if (process.platform === 'win32') {
+    exec('wmic printer get name', (error, stdout) => {
+      if (error) {
+        console.error('Erro ao obter impressoras:', error);
+        callback([]);
+        return;
+      }
+      
+      // Processar a saída do comando para extrair nomes de impressoras
+      const printerLines = stdout.split('\n')
+        .map(line => line.trim())
+        .filter(line => line && line !== 'Name');
+      
+      callback(printerLines);
+    });
+  } else {
+    // Para outros sistemas operacionais, podemos adicionar abordagens diferentes
+    callback([]);
+  }
+}
+
+// Inicializa conexão com o Supabase
+function initSupabase() {
+  const supabaseUrl = store.get('supabaseUrl') || '';
+  const supabaseKey = store.get('supabaseKey') || '';
+  
+  if (!supabaseUrl || !supabaseKey) {
+    return null;
+  }
+  
+  return createClient(supabaseUrl, supabaseKey);
+}
+
+// Função para imprimir documento
+async function printDocument(printData) {
+  try {
+    if (!printerName) {
+      throw new Error('Nenhuma impressora configurada');
+    }
+    
+    // Configurar impressora
+    let printer = new ThermalPrinter({
+      type: PrinterTypes.EPSON,  // Tipo genérico que funciona bem com a maioria das impressoras
+      interface: `printer:${printerName}`,
+      options: {
+        timeout: 5000,  // Tempo limite em ms
+        width: 48,      // Largura do papel (caracteres)
+      }
+    });
+    
+    console.log(`Tentando imprimir na impressora: ${printerName}`);
+    
+    // Verificar se a impressora está pronta
+    const isConnected = await printer.isPrinterConnected();
+    if (!isConnected) {
+      throw new Error(`Impressora ${printerName} não está conectada`);
+    }
+    
+    // Imprimir cabeçalho
+    printer.alignCenter();
+    printer.bold(true);
+    printer.println("FISCAL FLOW");
+    printer.bold(false);
+    printer.println("COMPROVANTE DE VENDA");
+    printer.drawLine();
+    
+    // Dados do cliente
+    printer.alignLeft();
+    printer.println(`CLIENTE: ${printData.cliente.nome}`);
+    printer.println(`CPF/CNPJ: ${printData.cliente.documento || 'N/A'}`);
+    printer.println(`DATA: ${new Date().toLocaleDateString()}`);
+    printer.drawLine();
+    
+    // Itens
+    printer.bold(true);
+    printer.println("PRODUTOS");
+    printer.bold(false);
+    
+    printData.itens.forEach(item => {
+      printer.println(`${item.nome}`);
+      printer.println(`${item.quantidade}x R$ ${item.preco} = R$ ${(item.quantidade * item.preco).toFixed(2)}`);
+    });
+    
+    printer.drawLine();
+    
+    // Total
+    printer.bold(true);
+    printer.alignRight();
+    printer.println(`TOTAL: R$ ${printData.total.toFixed(2)}`);
+    printer.bold(false);
+    
+    // Forma de pagamento
+    printer.println(`PAGAMENTO: ${printData.formaPagamento}`);
+    
+    // Cortar papel
+    printer.cut();
+    
+    // Executar impressão
+    await printer.execute();
+    
+    // Mostrar notificação na bandeja
+    if (tray) {
+      tray.displayBalloon({
+        title: 'Impressão concluída',
+        content: `Comprovante de ${printData.cliente.nome} impresso com sucesso.`
+      });
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Erro na impressão:', error);
+    dialog.showErrorBox('Erro na impressão', error.message);
+    
+    // Mostrar notificação na bandeja
+    if (tray) {
+      tray.displayBalloon({
+        title: 'Erro na impressão',
+        content: error.message
+      });
+    }
+    
+    return false;
+  }
+}
+
+// Escutar solicitações de impressão
+function listenForPrintRequests() {
+  if (!supabase) return;
+  
+  // Cancelar inscrição anterior se existir
+  if (subscription) {
+    subscription.unsubscribe();
+  }
+  
+  console.log('Iniciando monitoramento de solicitações de impressão...');
+  
+  // Inscrever para novas solicitações de impressão
+  subscription = supabase
+    .channel('print-requests')
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'print_requests',
+      filter: 'status=eq.pendente'
+    }, async (payload) => {
+      console.log('Nova solicitação de impressão:', payload.new);
+      
+      // Mostrar notificação na bandeja
+      if (tray) {
+        tray.displayBalloon({
+          title: 'Nova solicitação de impressão',
+          content: 'Processando impressão...'
+        });
+      }
+      
+      const success = await printDocument(payload.new.data);
+      
+      // Atualizar status da solicitação
+      if (success) {
+        await supabase
+          .from('print_requests')
+          .update({ status: 'concluido' })
+          .eq('id', payload.new.id);
+          
+        console.log('Impressão concluída com sucesso');
+      } else {
+        await supabase
+          .from('print_requests')
+          .update({ status: 'erro' })
+          .eq('id', payload.new.id);
+          
+        console.log('Erro na impressão');
+      }
+    })
+    .subscribe((status) => {
+      console.log('Status da inscrição:', status);
+    });
+}
+
+// Criar janela de configurações
+function createSettingsWindow() {
+  if (win) {
+    win.show();
+    return;
+  }
+  
+  win = new BrowserWindow({
+    width: 600,
+    height: 500,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    }
+  });
+  
+  win.loadFile('settings.html');
+  
+  win.on('closed', () => {
+    win = null;
+  });
+}
+
+// Mensagem de erro ao iniciar
+function showSetupError() {
+  dialog.showErrorBox(
+    'Configuração Necessária',
+    'É necessário configurar a conexão com o Supabase e selecionar uma impressora.\n\nA impressora recomendada é HP DESKJET 2700 SERIES.'
+  );
+  createSettingsWindow();
+}
+
+// Verificar se a impressora HP DESKJET 2700 SERIES está disponível
+function checkForHpPrinter(callback) {
+  getSystemPrinters(printers => {
+    const hpPrinter = printers.find(p => p.includes('HP DESKJET 2700'));
+    
+    if (hpPrinter && !printerName) {
+      // Sugerir a impressora HP se não houver nenhuma configurada
+      printerName = hpPrinter;
+      store.set('printerName', printerName);
+      
+      dialog.showMessageBox({
+        type: 'info',
+        title: 'Impressora HP Encontrada',
+        message: `A impressora ${printerName} foi encontrada e configurada automaticamente.`
+      });
+      
+      callback(true);
+    } else {
+      callback(false);
+    }
+  });
+}
+
+// Inicialização do aplicativo
+app.whenReady().then(() => {
+  // Criar ícone na bandeja do sistema de forma simplificada
+  try {
+    // Usar um ícone vazio como solução temporária
+    const emptyIcon = nativeImage.createEmpty();
+    tray = new Tray(emptyIcon);
+  } catch (error) {
+    console.error('Erro ao criar ícone da bandeja:', error);
+    dialog.showErrorBox(
+      'Aviso',
+      'Não foi possível carregar o ícone na bandeja do sistema, mas o aplicativo continuará funcionando.'
+    );
+  }
+  
+  // Verificar impressora HP
+  checkForHpPrinter(() => {
+    // Atualizar variáveis globais
+    printerName = store.get('printerName') || '';
+    supabase = initSupabase();
+    
+    // Menu de contexto do ícone na bandeja
+    const contextMenu = Menu.buildFromTemplate([
+      { 
+        label: 'Fiscal Flow Printer',
+        enabled: false 
+      },
+      { 
+        type: 'separator' 
+      },
+      { 
+        label: `Impressora: ${printerName || 'Não configurada'}`,
+        enabled: false 
+      },
+      { 
+        label: 'Configurações',
+        click: createSettingsWindow 
+      },
+      { 
+        label: 'Testar Impressora',
+        click: async () => {
+          if (!printerName) {
+            dialog.showErrorBox('Erro', 'Nenhuma impressora configurada');
+            return;
+          }
+          
+          const testData = {
+            cliente: { nome: 'Cliente de Teste', documento: '123.456.789-00' },
+            itens: [{ nome: 'Produto de Teste', quantidade: 1, preco: 10.0 }],
+            total: 10.0,
+            formaPagamento: 'Teste'
+          };
+          
+          await printDocument(testData);
+        }
+      },
+      { 
+        type: 'separator' 
+      },
+      { 
+        label: 'Sair',
+        click: () => app.quit() 
+      }
+    ]);
+    
+    tray.setToolTip('Fiscal Flow Printer');
+    tray.setContextMenu(contextMenu);
+    
+    // Verificar configurações
+    if (!supabase || !printerName) {
+      showSetupError();
+    } else {
+      // Iniciar escuta de solicitações de impressão
+      listenForPrintRequests();
+      
+      // Notificar que o serviço está ativo
+      tray.displayBalloon({
+        title: 'Fiscal Flow Printer',
+        content: `Serviço de impressão automática iniciado.\nUsando impressora: ${printerName}`
+      });
+    }
+  });
+});
+
+// Evitar que o aplicativo feche quando a janela for fechada
+app.on('window-all-closed', (e) => {
+  e.preventDefault();
+});
+
+// Sempre manter uma instância do aplicativo rodando
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createSettingsWindow();
+  }
+}); 

@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fiscal Flow Printer</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+    
+    body {
+      background-color: #f5f5f5;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    
+    header {
+      background-color: #1a56db;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .container {
+      flex: 1;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    
+    .status-bar {
+      background-color: #e5e7eb;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-radius: 8px;
+    }
+    
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: #ef4444;
+    }
+    
+    .status-dot.connected {
+      background-color: #10b981;
+    }
+    
+    .card {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+    
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.2s;
+    }
+    
+    .button-primary {
+      background-color: #1a56db;
+      color: white;
+    }
+    
+    .button-primary:hover {
+      background-color: #1e429f;
+    }
+    
+    .button-secondary {
+      background-color: #e5e7eb;
+      color: #1f2937;
+    }
+    
+    .button-secondary:hover {
+      background-color: #d1d5db;
+    }
+    
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 14px;
+      color: #6b7280;
+    }
+    
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      border-radius: 4px;
+      color: white;
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 1000;
+    }
+    
+    .toast.success {
+      background-color: #10b981;
+    }
+    
+    .toast.error {
+      background-color: #ef4444;
+    }
+    
+    .toast.show {
+      opacity: 1;
+    }
+    
+    .loader {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+      margin-left: 10px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .notification-banner {
+      background-color: #fef3c7;
+      border: 1px solid #f59e0b;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      display: none;
+    }
+    
+    .notification-banner.visible {
+      display: flex;
+    }
+    
+    .notification-message {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .notification-icon {
+      color: #d97706;
+      font-size: 18px;
+    }
+    
+    .print-all-button {
+      background-color: #dc2626;
+      color: white;
+      font-weight: bold;
+    }
+    
+    .print-all-button:hover {
+      background-color: #b91c1c;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Fiscal Flow Printer</h1>
+  </header>
+  
+  <div class="container">
+    <div class="status-bar">
+      <div class="status-indicator">
+        <div id="status-dot" class="status-dot"></div>
+        <span id="status-text">Desconectado</span>
+      </div>
+      <div>
+        <button id="test-connection-btn" class="button-secondary">Testar Conexão</button>
+      </div>
+    </div>
+    
+    <!-- Banner de notificação para múltiplos dispositivos -->
+    <div id="multi-device-banner" class="notification-banner">
+      <div class="notification-message">
+        <span class="notification-icon">⚠️</span>
+        <span>Múltiplos dispositivos detectados! Você pode imprimir todas as notas pendentes de uma vez.</span>
+      </div>
+      <button id="print-all-btn" class="print-all-button">Imprimir Todas</button>
+    </div>
+    
+    <div class="card">
+      <h2>Configurações</h2>
+      <form id="settings-form">
+        <div class="form-group">
+          <label for="user-id">ID do Usuário</label>
+          <input type="text" id="user-id" name="userId" placeholder="Digite o ID do usuário">
+        </div>
+        
+        <div class="form-group">
+          <label for="printer-name">Nome da Impressora</label>
+          <input type="text" id="printer-name" name="printerName" placeholder="Digite o nome da impressora">
+        </div>
+        
+        <div class="form-group">
+          <label for="check-interval">Intervalo de Verificação (ms)</label>
+          <input type="number" id="check-interval" name="checkInterval" min="1000" step="1000">
+        </div>
+        
+        <div class="form-group">
+          <div class="checkbox-group">
+            <input type="checkbox" id="auto-start" name="autoStart">
+            <label for="auto-start">Iniciar com o Windows</label>
+          </div>
+        </div>
+        
+        <div class="button-group">
+          <button type="submit" class="button-primary">Salvar Configurações</button>
+          <button type="button" id="test-printer-btn" class="button-secondary">Testar Impressora</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <footer>
+    <p>Fiscal Flow Printer &copy; 2023</p>
+  </footer>
+  
+  <div id="toast" class="toast"></div>
+  
+  <script>
+    // DOM Elements
+    const statusDot = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
+    const settingsForm = document.getElementById('settings-form');
+    const testConnectionBtn = document.getElementById('test-connection-btn');
+    const testPrinterBtn = document.getElementById('test-printer-btn');
+    const userIdInput = document.getElementById('user-id');
+    const printerNameInput = document.getElementById('printer-name');
+    const checkIntervalInput = document.getElementById('check-interval');
+    const autoStartInput = document.getElementById('auto-start');
+    const toast = document.getElementById('toast');
+    const multiDeviceBanner = document.getElementById('multi-device-banner');
+    const printAllBtn = document.getElementById('print-all-btn');
+    
+    // Update status indicator
+    function updateStatus(connected) {
+      if (connected) {
+        statusDot.classList.add('connected');
+        statusText.textContent = 'Conectado';
+      } else {
+        statusDot.classList.remove('connected');
+        statusText.textContent = 'Desconectado';
+      }
+    }
+    
+    // Show toast message
+    function showToast(message, type = 'success') {
+      toast.textContent = message;
+      toast.className = 'toast ' + type;
+      toast.classList.add('show');
+      
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+    
+    // Load settings
+    async function loadSettings() {
+      try {
+        const settings = await window.api.getSettings();
+        
+        userIdInput.value = settings.userId || '';
+        printerNameInput.value = settings.printerName || '';
+        checkIntervalInput.value = settings.checkInterval || 5000;
+        autoStartInput.checked = settings.autoStart || false;
+      } catch (error) {
+        console.error('Error loading settings:', error);
+        showToast('Erro ao carregar configurações', 'error');
+      }
+    }
+    
+    // Save settings
+    async function saveSettings(e) {
+      e.preventDefault();
+      
+      const settings = {
+        userId: userIdInput.value,
+        printerName: printerNameInput.value,
+        checkInterval: parseInt(checkIntervalInput.value, 10),
+        autoStart: autoStartInput.checked
+      };
+      
+      try {
+        const result = await window.api.saveSettings(settings);
+        
+        if (result.success) {
+          showToast('Configurações salvas com sucesso');
+        } else {
+          showToast('Erro ao salvar configurações', 'error');
+        }
+      } catch (error) {
+        console.error('Error saving settings:', error);
+        showToast('Erro ao salvar configurações', 'error');
+      }
+    }
+    
+    // Test connection
+    async function testConnection() {
+      testConnectionBtn.disabled = true;
+      testConnectionBtn.innerHTML = 'Testando... <span class="loader"></span>';
+      
+      try {
+        const result = await window.api.testConnection();
+        
+        if (result.success) {
+          showToast('Conexão bem-sucedida');
+        } else {
+          showToast('Falha na conexão: ' + result.message, 'error');
+        }
+      } catch (error) {
+        console.error('Error testing connection:', error);
+        showToast('Erro ao testar conexão', 'error');
+      } finally {
+        testConnectionBtn.disabled = false;
+        testConnectionBtn.textContent = 'Testar Conexão';
+      }
+    }
+    
+    // Test printer
+    async function testPrinter() {
+      testPrinterBtn.disabled = true;
+      testPrinterBtn.innerHTML = 'Testando... <span class="loader"></span>';
+      
+      try {
+        const result = await window.api.testPrinter();
+        
+        if (result.success) {
+          showToast('Impressora testada com sucesso');
+        } else {
+          showToast('Falha no teste da impressora: ' + result.message, 'error');
+        }
+      } catch (error) {
+        console.error('Error testing printer:', error);
+        showToast('Erro ao testar impressora', 'error');
+      } finally {
+        testPrinterBtn.disabled = false;
+        testPrinterBtn.textContent = 'Testar Impressora';
+      }
+    }
+    
+    // Imprimir todas as notas pendentes
+    async function printAllPending() {
+      printAllBtn.disabled = true;
+      printAllBtn.innerHTML = 'Imprimindo... <span class="loader"></span>';
+      
+      try {
+        const result = await window.api.printAllPending();
+        
+        if (result.success) {
+          showToast(`${result.message}`);
+        } else {
+          showToast(`Falha: ${result.message}`, 'error');
+        }
+      } catch (error) {
+        console.error('Error printing all pending notes:', error);
+        showToast('Erro ao imprimir notas pendentes', 'error');
+      } finally {
+        printAllBtn.disabled = false;
+        printAllBtn.textContent = 'Imprimir Todas';
+      }
+    }
+    
+    // Verificar e atualizar o status de múltiplos dispositivos
+    async function checkMultipleDevices() {
+      try {
+        const result = await window.api.checkMultipleDevices();
+        
+        if (result.multipleDevicesDetected) {
+          multiDeviceBanner.classList.add('visible');
+        } else {
+          multiDeviceBanner.classList.remove('visible');
+        }
+      } catch (error) {
+        console.error('Error checking multiple devices:', error);
+      }
+    }
+    
+    // Initialize
+    window.addEventListener('DOMContentLoaded', () => {
+      // Load initial settings
+      loadSettings();
+      
+      // Add event listeners
+      settingsForm.addEventListener('submit', saveSettings);
+      testConnectionBtn.addEventListener('click', testConnection);
+      testPrinterBtn.addEventListener('click', testPrinter);
+      printAllBtn.addEventListener('click', printAllPending);
+      
+      // Set up status listener
+      window.api.onConnectionStatus((connected) => {
+        updateStatus(connected);
+      });
+      
+      // Set up multiple devices listener
+      window.api.onMultipleDevicesUpdate((multipleDevices) => {
+        if (multipleDevices) {
+          multiDeviceBanner.classList.add('visible');
+        } else {
+          multiDeviceBanner.classList.remove('visible');
+        }
+      });
+      
+      // Verificar status de múltiplos dispositivos periodicamente
+      checkMultipleDevices();
+      setInterval(checkMultipleDevices, 60000); // Verificar a cada minuto
+    });
+  </script>
+</body>
+</html> 

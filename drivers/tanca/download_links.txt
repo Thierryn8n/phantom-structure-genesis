@@ -1,0 +1,28 @@
+# Links para Download da Impressora Tanca TP-650
+
+## Links Oficiais
+
+- Driver da Impressora Tanca TP-650: https://www.bztech.com.br/downloads/driver-tanca-tp-650
+- Firmware Tanca TP-650: https://www.bztech.com.br/downloads/firmware-tanca-tp-650
+- Site Oficial do Fabricante: https://www.tanca.com.br/
+
+## Suporte Técnico
+
+- Telefone: (011) 2626-4153
+- E-mail: vendas@tanca.com.br
+
+## Especificações de Conexão
+
+A impressora Tanca TP-650 possui três interfaces de conexão:
+
+1. USB
+2. Serial
+3. Ethernet (Rede)
+
+## Instruções para Instalação
+
+1. Baixe o driver através do link acima
+2. Execute o instalador como Administrador
+3. Siga as instruções do assistente de instalação
+4. Conecte a impressora ao computador apenas quando solicitado
+5. Teste a impressão após a conclusão da instalação 

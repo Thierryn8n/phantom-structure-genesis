@@ -2,10 +2,164 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = "https://bbqtnkqjvhzhxdmjmqtt.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJicXRua3Fqdmh6aHhkbWptcXR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNTIxMzAsImV4cCI6MjA2MTYyODEzMH0.ZD5Trt2HL3ZlGvNgNReP8C5IU9c7zQ3O__-gYlnKgdU";
+// Obtém as variáveis de ambiente
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Import the supabase client like this:
-// import { supabase } from "@/integrations/supabase/client";
+// Verificações de segurança para evitar inicialização com valores inválidos
+if (!supabaseUrl) {
+  console.error('ERRO CRÍTICO: VITE_SUPABASE_URL não definido no .env');
+}
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+if (!supabaseAnonKey) {
+  console.error('ERRO CRÍTICO: VITE_SUPABASE_ANON_KEY não definido no .env');
+}
+
+// Opções avançadas para melhorar a persistência da sessão
+const supabaseOptions = {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    storageKey: 'supabase.auth.token',
+    storage: localStorage,
+    // Verificar sessão a cada 30 segundos para garantir que temos um token válido
+    flowType: 'implicit' as const,
+  },
+  persistSession: true, // Configuração adicional para garantir persistência
+  realtime: {
+    params: {
+      eventsPerSecond: 10,
+    },
+  },
+  global: {
+    headers: {
+      'x-application-name': 'fiscal-flow',
+    },
+  },
+  // Configurações específicas para storage
+  storage: {
+    // Importante permitir uploads mesmo sem token para teste
+    multipart: true, // Habilita uploads multipart para arquivos maiores
+    retryLimit: 3, // Número de tentativas em caso de falha
+    retryDelay: 3000, // Delay entre tentativas (3 segundos)
+  },
+};
+
+// Cria o cliente com tipagem e configurações avançadas
+export const supabase = createClient<Database>(
+  supabaseUrl, 
+  supabaseAnonKey,
+  supabaseOptions
+);
+
+console.log('Cliente Supabase inicializado com persistência de sessão ativada');
+
+// Função para verificar se um erro é de autenticação
+const isAuthError = (error: any): boolean => {
+  if (!error) return false;
+  
+  // Verificar mensagens de erro comuns de autenticação
+  if (typeof error === 'string') {
+    return error.includes('jwt expired') || 
+           error.includes('token expired') || 
+           error.includes('not authenticated') ||
+           error.includes('invalid token') ||
+           error.includes('401') ||
+           error.includes('403');
+  }
+  
+  // Verificar códigos de erro HTTP
+  if (error.status === 401 || error.status === 403) {
+    return true;
+  }
+  
+  // Verificar mensagens de erro em objetos
+  if (error.message && typeof error.message === 'string') {
+    return error.message.includes('jwt expired') || 
+           error.message.includes('token expired') || 
+           error.message.includes('not authenticated') ||
+           error.message.includes('invalid token');
+  }
+  
+  return false;
+};
+
+// Interceptar erros de autenticação e redirecionar para login
+const handleAuthErrors = (error: any) => {
+  if (isAuthError(error)) {
+    console.error('Erro de autenticação detectado:', error);
+    
+    // Verificar se estamos em uma página protegida
+    const isPublicPage = ['/login', '/register', '/reset-password', '/', '/ecommerce'].some(
+      path => window.location.pathname === path || window.location.pathname.startsWith('/ecommerce/')
+    );
+    
+    if (!isPublicPage) {
+      console.log('Redirecionando para login devido a erro de autenticação');
+      
+      // Limpar tokens
+      localStorage.removeItem('supabase.auth.token');
+      
+      // Salvar o caminho atual para redirecionar de volta após o login
+      const currentPath = encodeURIComponent(window.location.pathname + window.location.search);
+      
+      // Redirecionar para login
+      window.location.href = `/login?redirect=${currentPath}`;
+    }
+  }
+};
+
+// Interceptar todos os métodos do supabase que interagem com a API
+const originalAuthGetUser = supabase.auth.getUser;
+supabase.auth.getUser = async function() {
+  try {
+    const response = await originalAuthGetUser.apply(this);
+    if (response.error) {
+      handleAuthErrors(response.error);
+    }
+    return response;
+  } catch (error) {
+    handleAuthErrors(error);
+    throw error;
+  }
+};
+
+// Adiciona um listener para depuração dos eventos de autenticação
+supabase.auth.onAuthStateChange((event, session) => {
+  console.log('Evento de autenticação:', event);
+  console.log('Sessão presente:', !!session);
+  
+  if (event === 'SIGNED_IN') {
+    console.log('Usuário conectado com ID:', session?.user?.id);
+  } else if (event === 'SIGNED_OUT') {
+    console.log('Usuário desconectado');
+    // Limpar quaisquer tokens remanescentes
+    localStorage.removeItem('supabase.auth.token');
+  } else if (event === 'TOKEN_REFRESHED') {
+    console.log('Token atualizado, expira em:', new Date(session?.expires_at || 0).toLocaleString());
+  } else if (event === 'USER_UPDATED') {
+    console.log('Dados do usuário atualizados');
+  }
+});
+
+// Para uso com funções de serviço que precisam de privilégios elevados
+export const createServiceClient = () => {
+  const supabaseServiceKey = import.meta.env.VITE_SUPABASE_SERVICE_KEY;
+  
+  if (!supabaseServiceKey) {
+    console.error('ERRO: VITE_SUPABASE_SERVICE_KEY não definido no .env');
+    throw new Error('Chave de serviço do Supabase não configurada');
+  }
+  
+  return createClient<Database>(
+    supabaseUrl, 
+    supabaseServiceKey, 
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      }
+    }
+  );
+};

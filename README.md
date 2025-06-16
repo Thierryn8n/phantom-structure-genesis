@@ -4,6 +4,20 @@
 
 **URL**: https://lovable.dev/projects/ed644bca-bede-466e-88a2-763094af78d1
 
+## Novos Recursos: Sistema de Temas para E-commerce
+
+Este projeto agora inclui um sistema dinâmico de temas para a loja de e-commerce, permitindo:
+
+- Personalização completa de cores, fontes e layout
+- Alteração dos estilos dos cartões de produtos
+- Temas predefinidos para rápida aplicação
+- Persistência das configurações no banco de dados Supabase
+
+### Documentação do Sistema de Temas
+
+- [Implementação do Provedor de Temas](./docs/guides/theme-provider-implementation.md)
+- [Guia para Migrações SQL](./docs/guides/aplicar_migracao_ecommerce_settings.md)
+
 ## How can I edit this code?
 
 There are several ways of editing your application.
