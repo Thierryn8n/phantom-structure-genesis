@@ -1,6 +1,4 @@
 
-
-
 export interface User {
   id: string;
   email?: string;
@@ -66,7 +64,7 @@ export interface FiscalNote {
     price: number;
   }>;
   total: number;
-  status: 'pending' | 'completed' | 'cancelled' | 'draft' | 'issued' | 'printed' | 'finalized';
+  status: 'pending' | 'completed' | 'cancelled' | 'draft' | 'issued' | 'printed' | 'finalized' | 'canceled';
   created_at?: string;
 }
 
@@ -102,7 +100,7 @@ export interface StoreInfo {
   paymentMethods?: string[];
 }
 
-export type OrderStatus = 'entrada' | 'preparando' | 'saiu_para_entrega' | 'cancelado' | 'pendente';
+export type OrderStatus = 'entrada' | 'preparando' | 'saiu_para_entrega' | 'cancelado' | 'pendente' | 'producao';
 
 export interface NewOrderKanbanData {
   product_id: string;

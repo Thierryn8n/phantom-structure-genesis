@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import StoreLayout from '@/components/ecommerce/StoreLayout';
 import { 
@@ -433,7 +432,17 @@ const Ecommerce: React.FC = () => {
   
   // Adicionar produto ao carrinho
   const handleAddToCart = (product: EcommerceProduct) => {
-    addToCart(product);
+    const cartItem = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      quantity: 1,
+      imageUrl: product.imageUrl || product.image_url,
+      unit: product.unit,
+      subtotal: product.price
+    };
+    
+    addToCart(cartItem);
     toast({
       title: 'Produto adicionado',
       description: `${product.name} foi adicionado ao carrinho`,
