@@ -437,7 +437,7 @@ const Ecommerce: React.FC = () => {
       name: product.name,
       price: product.price,
       quantity: 1,
-      imageUrl: product.imageUrl || product.image_url,
+      imageUrl: product.imageUrl,
       unit: product.unit,
       subtotal: product.price
     };

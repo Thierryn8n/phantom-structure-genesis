@@ -158,7 +158,7 @@ export interface NewCustomerData {
 }
 
 // Interfaces para o sistema Kanban
-export type OrderStatus = 'entrada' | 'preparando' | 'saiu_para_entrega' | 'cancelado' | 'pendente';
+export type OrderStatus = 'entrada' | 'preparando' | 'saiu_para_entrega' | 'cancelado' | 'pendente' | 'producao';
 
 export interface OrderKanban {
   id: string;
@@ -183,8 +183,8 @@ export interface NewOrderKanbanData {
   seller_id: string;
   seller_name: string;
   status: OrderStatus;
-  notes?: string;
-  total_amount?: number;
+  notes: string;
+  total_amount: number;
 }
 
 // Nova interface para os dados da Visão Geral do Dashboard
@@ -873,3 +873,5 @@ export class EcommerceService {
   }
   // =============================================================================================
 }
+
+export default EcommerceService;
