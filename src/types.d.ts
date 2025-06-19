@@ -32,11 +32,19 @@ export interface EcommerceProduct {
   price: number;
   category_id?: string;
   image_url?: string;
+  imageUrl?: string;
   created_at?: string;
   updated_at?: string;
   stock?: number;
   images?: string[];
   additionalImages?: string[];
+  code?: string;
+  ncm?: string;
+  unit?: string;
+  quantity?: number;
+  inStock?: boolean;
+  category?: string;
+  slug?: string;
 }
 
 export interface Customer {
@@ -77,6 +85,14 @@ export interface StoreInfo {
   user_id?: string;
   owner_id?: string;
   ownerId?: string;
+  description?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  banner_image_url?: string;
+  use_overlay_text?: boolean;
+  logo?: string;
+  logo_url?: string;
   shippingMethods?: Array<{
     id: string;
     name: string;

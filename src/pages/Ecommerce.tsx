@@ -60,7 +60,7 @@ const Ecommerce: React.FC = () => {
     
     // Nova implementação com forceRefresh
     setIsLoading(true);
-    EcommerceService.getStoreInfo(true)
+    EcommerceService.getStoreInfo()
       .then(storeInfo => {
         setStoreInfo(storeInfo);
         toast({
@@ -402,7 +402,7 @@ const Ecommerce: React.FC = () => {
       result = result.filter(product => 
         product.name.toLowerCase().includes(term) || 
         product.description?.toLowerCase().includes(term) ||
-        product.code.toLowerCase().includes(term)
+        product.code?.toLowerCase().includes(term)
       );
     }
     
@@ -877,4 +877,4 @@ const Ecommerce: React.FC = () => {
   );
 };
 
-export default Ecommerce; 
+export default Ecommerce;
