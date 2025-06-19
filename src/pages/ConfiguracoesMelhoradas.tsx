@@ -286,293 +286,182 @@ const SettingsNew = () => {
                         e.stopPropagation();
                         handleRemoveFee(fee.id);
                       }} 
-      <div className="space-y-6 pb-10 max-w-3xl mx-auto">
-        {/* Cabeçalho */}
-        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold flex items-center">
-              <SettingsIcon size={28} className="mr-3 text-green-600" />
-              Configurações Melhoradas
-            </h1>
-            <Button 
-              type="button"
-              onClick={handleSaveSettings} 
-              className="bg-green-600 hover:bg-green-700"
-            >
-              <Save size={18} className="mr-2" />
-              Salvar Configurações
-            </Button>
-          </div>
-        </div>
-        
-        {/* Dados da Empresa */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold flex items-center">
-              <Briefcase size={20} className="mr-3 text-green-600" />
-              Dados da Empresa
-            </h2>
-          </div>
-          <div className="p-4 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nome da Empresa</label>
-                <input
-                  type="text"
-                  value={companyData.name}
-                  onChange={(e) => setCompanyData({...companyData, name: e.target.value})}
-                  className="w-full px-3 py-2 rounded-lg border-2 border-gray-300"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">CNPJ</label>
-                <input
-                  type="text"
-                  value={companyData.cnpj}
-                  onChange={(e) => setCompanyData({...companyData, cnpj: e.target.value})}
-                  className="w-full px-3 py-2 rounded-lg border-2 border-gray-300"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">CEP</label>
-                <input
-                  type="text"
-                  value={companyData.zipCode}
-                  onChange={(e) => setCompanyData({...companyData, zipCode: e.target.value})}
-                  className="w-full px-3 py-2 rounded-lg border-2 border-gray-300"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Endereço</label>
-                <input
-                  type="text"
-                  value={companyData.address}
-                  onChange={(e) => setCompanyData({...companyData, address: e.target.value})}
-                  className="w-full px-3 py-2 rounded-lg border-2 border-gray-300"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Cidade</label>
-                <input
-                  type="text"
-                  value={companyData.city}
-                  onChange={(e) => setCompanyData({...companyData, city: e.target.value})}
-                  className="w-full px-3 py-2 rounded-lg border-2 border-gray-300"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-                <input
-                  type="text"
-                  value={companyData.state}
-                  onChange={(e) => setCompanyData({...companyData, state: e.target.value})}
-                  className="w-full px-3 py-2 rounded-lg border-2 border-gray-300"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Taxas de Parcelamento */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold flex items-center">
-              <CreditCard size={20} className="mr-3 text-green-600" />
-              Taxas de Parcelamento
-            </h2>
-          </div>
-          <div className="p-4 space-y-4">
-            {/* Lista de taxas existentes */}
-            {installmentFees.length === 0 ? (
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-600">Nenhuma taxa configurada.</p>
-              </div>
-            ) : (
-              installmentFees.map(fee => (
-                <div key={fee.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <span>{fee.installments}x: {fee.fee}%</span>
-                  <button 
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleRemoveFee(fee.id);
-                    }} 
-                    className="text-gray-500 hover:text-red-600 p-1"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              ))
-            )}
-            
-            {/* Formulário para adicionar/atualizar taxa */}
-            <div className="pt-4 space-y-3 border-t border-gray-200">
-              <p className="text-sm font-medium">Adicionar/Atualizar Taxa</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Parcelas</label>
-                  <input
-                    type="number"
-                    value={newInstallment}
-                    onChange={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setNewInstallment(parseInt(e.target.value) || 2);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }
-                    }}
-                    min="2"
-                    className="w-full px-3 py-2 rounded-lg border-2 border-gray-300"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Taxa (%)</label>
-                  <input
-                    type="number"
-                    value={newFee}
-                    onChange={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setNewFee(parseFloat(e.target.value) || 0);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }
-                    }}
-                    min="0"
-                    step="0.1"
-                    className="w-full px-3 py-2 rounded-lg border-2 border-gray-300"
-                  />
-                </div>
-              </div>
-              <span 
-                role="button"
-                tabIndex={0}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleAddInstallment(e);
-                }}
-                className="w-full flex items-center justify-center bg-white border-2 border-green-500 text-green-700 font-medium py-2 rounded-xl cursor-pointer"
-              >
-                <Plus size={18} className="mr-1.5" /> 
-                Adicionar/Atualizar Taxa
-              </span>
-            </div>
-          </div>
-        </div>
-        
-        {/* Configurações de Entrega */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold flex items-center">
-              <Truck size={20} className="mr-3 text-green-600" />
-              Configurações de Entrega
-            </h2>
-          </div>
-          <div className="p-4 space-y-4">
-            {/* Lista de raios existentes */}
-            {deliveryRadiuses.length === 0 ? (
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-600">Nenhum raio de entrega configurado.</p>
-              </div>
-            ) : (
-              deliveryRadiuses.map(radius => (
-                <div key={radius.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center">
-                    <span style={{ backgroundColor: radius.color }} className="w-3 h-3 rounded-full mr-2"></span>
-                    <span>{radius.radius}km: R${radius.price.toFixed(2)}</span>
+                      className="text-gray-500 hover:text-red-600 p-1"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
-                  <button 
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleRemoveRadius(radius.id);
-                    }}
-                    className="text-gray-500 hover:text-red-600 p-1"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              ))
-            )}
-            
-            {/* Formulário para adicionar/atualizar raio */}
-            <div className="pt-4 space-y-3 border-t border-gray-200">
-              <p className="text-sm font-medium">Adicionar/Atualizar Raio</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Raio (km)</label>
-                  <input
-                    type="number"
-                    value={newRadius}
-                    onChange={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setNewRadius(parseInt(e.target.value) || 1);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
+                ))
+              )}
+              
+              {/* Formulário para adicionar/atualizar taxa */}
+              <div className="pt-4 space-y-3 border-t border-gray-200">
+                <p className="text-sm font-medium">Adicionar/Atualizar Taxa</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Parcelas</label>
+                    <input
+                      type="number"
+                      value={newInstallment}
+                      onChange={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                      }
-                    }}
-                    min="1"
-                    className="w-full px-3 py-2 rounded-lg border-2 border-gray-300"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Preço (R$)</label>
-                  <input
-                    type="number"
-                    value={newPrice}
-                    onChange={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setNewPrice(parseFloat(e.target.value) || 0);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
+                        setNewInstallment(parseInt(e.target.value) || 2);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }
+                      }}
+                      min="2"
+                      className="w-full px-3 py-2 rounded-lg border-2 border-gray-300"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Taxa (%)</label>
+                    <input
+                      type="number"
+                      value={newFee}
+                      onChange={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                      }
-                    }}
-                    min="0"
-                    step="0.01"
-                    className="w-full px-3 py-2 rounded-lg border-2 border-gray-300"
+                        setNewFee(parseFloat(e.target.value) || 0);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }
+                      }}
+                      min="0"
+                      step="0.1"
+                      className="w-full px-3 py-2 rounded-lg border-2 border-gray-300"
+                    />
+                  </div>
+                </div>
+                <span 
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleAddInstallment(e);
+                  }}
+                  className="w-full flex items-center justify-center bg-white border-2 border-green-500 text-green-700 font-medium py-2 rounded-xl cursor-pointer"
+                >
+                  <Plus size={18} className="mr-1.5" /> 
+                  Adicionar/Atualizar Taxa
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Configurações de Entrega */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold flex items-center">
+                <Truck size={20} className="mr-3 text-green-600" />
+                Configurações de Entrega
+              </h2>
+            </div>
+            <div className="p-4 space-y-4">
+              {/* Lista de raios existentes */}
+              {deliveryRadiuses.length === 0 ? (
+                <div className="text-center p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600">Nenhum raio de entrega configurado.</p>
+                </div>
+              ) : (
+                deliveryRadiuses.map(radius => (
+                  <div key={radius.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center">
+                      <span style={{ backgroundColor: radius.color }} className="w-3 h-3 rounded-full mr-2"></span>
+                      <span>{radius.radius}km: R${radius.price.toFixed(2)}</span>
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleRemoveRadius(radius.id);
+                      }}
+                      className="text-gray-500 hover:text-red-600 p-1"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))
+              )}
+              
+              {/* Formulário para adicionar/atualizar raio */}
+              <div className="pt-4 space-y-3 border-t border-gray-200">
+                <p className="text-sm font-medium">Adicionar/Atualizar Raio</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Raio (km)</label>
+                    <input
+                      type="number"
+                      value={newRadius}
+                      onChange={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setNewRadius(parseInt(e.target.value) || 1);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }
+                      }}
+                      min="1"
+                      className="w-full px-3 py-2 rounded-lg border-2 border-gray-300"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Preço (R$)</label>
+                    <input
+                      type="number"
+                      value={newPrice}
+                      onChange={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setNewPrice(parseFloat(e.target.value) || 0);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }
+                      }}
+                      min="0"
+                      step="0.01"
+                      className="w-full px-3 py-2 rounded-lg border-2 border-gray-300"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Cor do Raio</label>
+                  <input 
+                    type="color" 
+                    value={selectedColor} 
+                    onChange={(e) => setSelectedColor(e.target.value)}
+                    className="w-full h-10 p-1 border-2 border-gray-300 rounded-lg"
                   />
                 </div>
+                <span 
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleAddRadius(e);
+                  }}
+                  className="w-full flex items-center justify-center bg-white border-2 border-green-500 text-green-700 font-medium py-2 rounded-xl cursor-pointer"
+                >
+                  <Plus size={18} className="mr-1.5" /> 
+                  Adicionar/Atualizar Raio
+                </span>
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Cor do Raio</label>
-                <input 
-                  type="color" 
-                  value={selectedColor} 
-                  onChange={(e) => setSelectedColor(e.target.value)}
-                  className="w-full h-10 p-1 border-2 border-gray-300 rounded-lg"
-                />
-              </div>
-              <span 
-                role="button"
-                tabIndex={0}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleAddRadius(e);
-                }}
-                className="w-full flex items-center justify-center bg-white border-2 border-green-500 text-green-700 font-medium py-2 rounded-xl cursor-pointer"
-              >
-                <Plus size={18} className="mr-1.5" /> 
-                Adicionar/Atualizar Raio
-              </span>
             </div>
           </div>
         </div>
