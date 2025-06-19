@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -32,6 +33,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { formatPrice } from '@/utils/format';
+import { OrderStatus, NewOrderKanbanData } from '@/types';
 
 // Tipos
 interface CustomerForm {
@@ -213,20 +215,20 @@ const Checkout: React.FC = () => {
         phone: customerForm.phone,
         email: customerForm.email,
         address: customerForm.address,
-        owner_id: storeInfo?.owner_id || ''
+        owner_id: storeInfo?.user_id || ''
       };
 
       const customer = await EcommerceService.createCustomer(customerData);
 
       // Criar o pedido
-      const orderData = {
+      const orderData: NewOrderKanbanData = {
         product_id: cartItems[0].id,
         product_name: cartItems.map(item => `${item.name} (${item.quantity}x)`).join(', '),
         customer_id: customer.id,
         customer_name: customerForm.name,
-        seller_id: storeInfo?.owner_id || '',
+        seller_id: storeInfo?.user_id || '',
         seller_name: storeInfo?.store_name || storeInfo?.name || '',
-        status: 'entrada',
+        status: 'entrada' as OrderStatus,
         notes: orderNote,
         total_amount: total
       };

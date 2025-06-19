@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 // Tipos
@@ -7,16 +8,24 @@ export interface CartItem {
   price: number;
   quantity: number;
   imageUrl?: string;
+  unit?: string;
+  subtotal: number;
 }
 
 interface CartContextData {
   cartItems: CartItem[];
+  cart: CartItem[];
   addToCart: (item: CartItem) => void;
   removeFromCart: (itemId: string) => void;
   updateCartItemQuantity: (itemId: string, quantity: number) => void;
+  updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
   getCartTotal: () => number;
   getCartItemCount: () => number;
+  totalItems: number;
+  totalPrice: number;
+  isCartOpen: boolean;
+  setIsCartOpen: (open: boolean) => void;
 }
 
 // Contexto
@@ -42,6 +51,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return storedItems ? JSON.parse(storedItems) : [];
   });
 
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
   // Salva os itens do carrinho no localStorage sempre que houver alteração
   useEffect(() => {
     localStorage.setItem('@FiscalFlow:cart', JSON.stringify(cartItems));
@@ -56,11 +67,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Se o item já existe, atualiza a quantidade
         const updatedItems = [...currentItems];
         updatedItems[existingItemIndex].quantity += newItem.quantity;
+        updatedItems[existingItemIndex].subtotal = updatedItems[existingItemIndex].quantity * updatedItems[existingItemIndex].price;
         return updatedItems;
       }
 
       // Se o item não existe, adiciona ao carrinho
-      return [...currentItems, newItem];
+      const itemWithSubtotal = {
+        ...newItem,
+        subtotal: newItem.price * newItem.quantity
+      };
+      return [...currentItems, itemWithSubtotal];
     });
   };
 
@@ -73,10 +89,17 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateCartItemQuantity = (itemId: string, quantity: number) => {
     setCartItems(currentItems =>
       currentItems.map(item =>
-        item.id === itemId ? { ...item, quantity } : item
+        item.id === itemId ? { 
+          ...item, 
+          quantity,
+          subtotal: item.price * quantity
+        } : item
       )
     );
   };
+
+  // Alias para updateCartItemQuantity
+  const updateQuantity = updateCartItemQuantity;
 
   // Limpa o carrinho
   const clearCart = () => {
@@ -93,16 +116,26 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return cartItems.reduce((total, item) => total + item.quantity, 0);
   };
 
+  // Propriedades calculadas
+  const totalItems = getCartItemCount();
+  const totalPrice = getCartTotal();
+
   return (
     <CartContext.Provider
       value={{
         cartItems,
+        cart: cartItems, // Alias para compatibilidade
         addToCart,
         removeFromCart,
         updateCartItemQuantity,
+        updateQuantity,
         clearCart,
         getCartTotal,
         getCartItemCount,
+        totalItems,
+        totalPrice,
+        isCartOpen,
+        setIsCartOpen,
       }}
     >
       {children}

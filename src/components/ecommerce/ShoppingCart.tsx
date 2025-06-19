@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useCart } from '@/contexts/CartContext';
 import { 
@@ -18,9 +19,9 @@ interface ShoppingCartProps {
 
 const ShoppingCartComponent: React.FC<ShoppingCartProps> = ({ className }) => {
   const { 
-    cart, 
+    cartItems,
     removeFromCart, 
-    updateQuantity, 
+    updateCartItemQuantity, 
     totalItems, 
     totalPrice, 
     isCartOpen, 
@@ -102,7 +103,7 @@ const ShoppingCartComponent: React.FC<ShoppingCartProps> = ({ className }) => {
         </div>
         
         <div className="flex-1 overflow-y-auto p-4">
-          {cart.length === 0 ? (
+          {cartItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-500">
               <ShoppingBag size={64} className="text-gray-300 mb-4" />
               <p className="mb-2">Seu carrinho está vazio</p>
@@ -118,7 +119,7 @@ const ShoppingCartComponent: React.FC<ShoppingCartProps> = ({ className }) => {
             </div>
           ) : (
             <div className="space-y-4">
-              {cart.map(item => (
+              {cartItems.map(item => (
                 <div 
                   key={item.id}
                   className="flex gap-4 p-3 border rounded-lg hover:bg-gray-50 transition-colors"
@@ -160,7 +161,7 @@ const ShoppingCartComponent: React.FC<ShoppingCartProps> = ({ className }) => {
                     <div className="flex justify-between items-center">
                       <div className="flex items-center border rounded-md overflow-hidden">
                         <button 
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          onClick={() => updateCartItemQuantity(item.id, item.quantity - 1)}
                           className="px-2 py-1 hover:bg-gray-100"
                           disabled={item.quantity <= 1}
                         >
@@ -168,7 +169,7 @@ const ShoppingCartComponent: React.FC<ShoppingCartProps> = ({ className }) => {
                         </button>
                         <span className="px-3 py-1 text-sm">{item.quantity}</span>
                         <button 
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => updateCartItemQuantity(item.id, item.quantity + 1)}
                           className="px-2 py-1 hover:bg-gray-100"
                         >
                           <Plus size={14} className="text-gray-600" />
@@ -189,7 +190,7 @@ const ShoppingCartComponent: React.FC<ShoppingCartProps> = ({ className }) => {
           )}
         </div>
         
-        {cart.length > 0 && (
+        {cartItems.length > 0 && (
           <div className="border-t p-4 space-y-4">
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Subtotal</span>
