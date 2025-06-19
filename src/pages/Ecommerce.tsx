@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import StoreLayout from '@/components/ecommerce/StoreLayout';
 import { 
@@ -526,7 +527,7 @@ const Ecommerce: React.FC = () => {
           <div 
             className="relative overflow-hidden h-[300px] md:h-[580px] bg-gray-100 w-full"
             style={{
-              backgroundImage: `url(${storeInfo.banner_image_url}?v=${Date.now()})`, // Evita cache do navegador
+              backgroundImage: `url(${storeInfo.banner_image_url}?v=${Date.now()})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
@@ -577,32 +578,33 @@ const Ecommerce: React.FC = () => {
                   <span className="font-bold">35% OFF</span>
                 </div>
                 <h1 className="text-3xl md:text-4xl font-bold mb-2">
-                {storeInfo?.name || 'Loja Online'}
-              </h1>
-              <h2 className="text-2xl md:text-3xl font-bold mb-4">
-                Os melhores produtos
-              </h2>
-              <p className="text-2xl font-bold mb-4">
-                {formatPrice(49)}
-              </p>
-              <Button 
-                className="bg-black hover:bg-gray-800 text-white mt-2"
-                onClick={() => {
-                  const productsSection = document.getElementById('products-section');
-                  if (productsSection) {
-                    productsSection.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }}
-              >
-                Ver produtos
-              </Button>
-            </div>
-            <div className="md:w-1/2 relative h-[200px] md:h-[300px]">
-              <img 
-                src="https://demo-toolpart.myshopify.com/cdn/shop/files/drill-img_d0312d92-22e0-47a1-b1d9-e5a7b1718c5e.png?v=1710403271" 
-                alt="Destaque" 
-                className="absolute right-0 bottom-0 max-h-full max-w-full object-contain"
-              />
+                  {storeInfo?.name || 'Loja Online'}
+                </h1>
+                <h2 className="text-2xl md:text-3xl font-bold mb-4">
+                  Os melhores produtos
+                </h2>
+                <p className="text-2xl font-bold mb-4">
+                  {formatPrice(49)}
+                </p>
+                <Button 
+                  className="bg-black hover:bg-gray-800 text-white mt-2"
+                  onClick={() => {
+                    const productsSection = document.getElementById('products-section');
+                    if (productsSection) {
+                      productsSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
+                >
+                  Ver produtos
+                </Button>
+              </div>
+              <div className="md:w-1/2 relative h-[200px] md:h-[300px]">
+                <img 
+                  src="https://demo-toolpart.myshopify.com/cdn/shop/files/drill-img_d0312d92-22e0-47a1-b1d9-e5a7b1718c5e.png?v=1710403271" 
+                  alt="Destaque" 
+                  className="absolute right-0 bottom-0 max-h-full max-w-full object-contain"
+                />
+              </div>
             </div>
           </div>
         )}
