@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useReactToPrint } from 'react-to-print';
@@ -172,6 +173,7 @@ const FiscalNoteForm: React.FC = () => {
         paymentData: {
           method: paymentData.method,
           installments: paymentData.installments,
+          total: totalValue,
           dueDate: paymentData.dueDate || undefined,
           observation: paymentData.observation || undefined
         },
