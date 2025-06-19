@@ -1,3 +1,4 @@
+
 import { useToast } from "@/hooks/use-toast"
 import {
   Toast,
@@ -15,7 +16,7 @@ export function Toaster() {
 
   return (
     <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, variant, ...props }) {
+      {toasts.map(function ({ id, title, description, variant, ...props }) {
         // Determinar qual ícone mostrar baseado na variante do toast
         const getIcon = () => {
           switch (variant) {
@@ -47,7 +48,6 @@ export function Toaster() {
                 )}
               </div>
             </div>
-            {action}
             <ToastClose className="absolute right-2 top-2 rounded-full p-1 text-foreground/50 opacity-100 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none hover:bg-gray-200">
               <X className="h-4 w-4" />
             </ToastClose>

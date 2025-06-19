@@ -31,6 +31,7 @@ const FiscalNoteForm: React.FC = () => {
   const [paymentData, setPaymentData] = useState<PaymentData>({
     method: 'cash',
     installments: 1,
+    total: 0,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   

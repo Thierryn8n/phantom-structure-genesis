@@ -10,6 +10,8 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  refreshSession: () => Promise<boolean>;
+  forceRefreshAuthContext: () => Promise<boolean>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -70,6 +72,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (error) throw error;
   };
 
+  const refreshSession = async (): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.auth.refreshSession();
+      if (error) {
+        console.error('Error refreshing session:', error);
+        return false;
+      }
+      if (data?.session) {
+        setUser(data.session.user);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error in refreshSession:', error);
+      return false;
+    }
+  };
+
+  const forceRefreshAuthContext = async (): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Error getting session:', error);
+        return false;
+      }
+      if (data?.session) {
+        setUser(data.session.user);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error in forceRefreshAuthContext:', error);
+      return false;
+    }
+  };
+
   const value = {
     user,
     loading,
@@ -77,6 +115,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signUp,
     signOut,
     resetPassword,
+    refreshSession,
+    forceRefreshAuthContext,
   };
 
   return (
