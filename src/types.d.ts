@@ -30,6 +30,7 @@ export interface EcommerceProduct {
   updated_at?: string;
   stock?: number;
   images?: string[];
+  additionalImages?: string[];
 }
 
 export interface Customer {
@@ -51,11 +52,11 @@ export interface FiscalNote {
     price: number;
   }>;
   total: number;
-  status: 'pending' | 'completed' | 'cancelled' | 'draft' | 'issued' | 'printed';
+  status: 'pending' | 'completed' | 'cancelled' | 'draft' | 'issued' | 'printed' | 'finalized';
   created_at?: string;
 }
 
-export type PaymentMethod = 'cash' | 'credit' | 'debit' | 'pix' | 'check' | 'transfer' | 'other';
+export type PaymentMethod = 'cash' | 'credit' | 'debit' | 'pix' | 'check' | 'transfer' | 'other' | 'bank_transfer' | 'store_credit' | 'installment_plan' | 'mobile_payment' | 'money_order' | 'voucher';
 
 export interface PaymentData {
   method: PaymentMethod;
@@ -68,6 +69,7 @@ export interface StoreInfo {
   store_name?: string;
   name?: string;
   user_id?: string;
+  owner_id?: string;
   shippingMethods?: Array<{
     id: string;
     name: string;

@@ -342,7 +342,7 @@ export class NotesService {
       paymentData.paid = true;
       paymentData.paidAt = new Date().toISOString();
 
-      const updates = {
+      const updates: any = {
         payment_data: paymentData,
         updated_at: new Date().toISOString()
       };
