@@ -194,7 +194,7 @@ const ProductDetailPage: React.FC = () => {
 
   const handleAddToCart = () => {
     if (product) {
-      addToCart(product, quantity);
+      addToCart(product);
       toast({
         title: 'Produto adicionado',
         description: `${product.name} (x${quantity}) foi adicionado ao carrinho.`,
@@ -204,7 +204,7 @@ const ProductDetailPage: React.FC = () => {
 
   const handleBuyNow = () => {
     if (product) {
-      addToCart(product, quantity);
+      addToCart(product);
       navigate('/ecommerce/checkout');
     }
   };
@@ -264,6 +264,7 @@ const ProductDetailPage: React.FC = () => {
           seller_name: selectedSeller.full_name,
           status: 'entrada', // Status inicial: entrada
           notes: `Pedido via WhatsApp. Valor: ${formatPrice(product.price)}`,
+          total_amount: product.price, // Add required total_amount property
         };
 
         const orderId = await EcommerceService.createOrderKanban(orderData);
@@ -415,10 +416,10 @@ const ProductDetailPage: React.FC = () => {
                 </Button>
               </div>
               
-              {/* Thumbnails com hover effect */}
-              {product.additionalImages && product.additionalImages.length > 0 && (
+              {/* Thumbnails with proper property check */}
+              {product.images && product.images.length > 0 && (
                 <div className="grid grid-cols-4 gap-4">
-                  {product.additionalImages.map((img, idx) => (
+                  {product.images.map((img, idx) => (
                     <div 
                       key={idx}
                       className="aspect-square rounded-xl overflow-hidden border cursor-pointer hover:border-[var(--store-primary)] transition-all"
@@ -812,4 +813,4 @@ const ProductDetailPage: React.FC = () => {
   );
 };
 
-export default ProductDetailPage; 
+export default ProductDetailPage;
