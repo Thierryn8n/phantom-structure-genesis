@@ -1,4 +1,5 @@
 
+
 export interface User {
   id: string;
   email?: string;
@@ -92,3 +93,4 @@ export interface NewOrderKanbanData {
   notes: string;
   total_amount: number;
 }
+

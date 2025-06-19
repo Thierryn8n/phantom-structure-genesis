@@ -1,3 +1,4 @@
+
 // Tipos para produtos em uma nota fiscal
 export interface NoteProduct {
   id: string;
@@ -25,10 +26,11 @@ export interface CustomerData {
   email?: string;
 }
 
-// Tipo para dados de pagamento
+// Tipo para dados de pagamento - using the expanded PaymentMethod from types.d.ts
 export interface PaymentData {
-  method: 'cash' | 'credit' | 'debit' | 'transfer' | 'pix' | 'check' | 'other';
+  method: 'cash' | 'credit' | 'debit' | 'pix' | 'check' | 'transfer' | 'other' | 'bank_transfer' | 'store_credit' | 'installment_plan' | 'mobile_payment' | 'money_order' | 'voucher';
   installments: number;
+  total: number;
   dueDate?: string;
   observation?: string;
   paid?: boolean;
