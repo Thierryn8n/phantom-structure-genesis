@@ -214,7 +214,7 @@ const Checkout: React.FC = () => {
         phone: customerForm.phone,
         email: customerForm.email,
         address: customerForm.address,
-        owner_id: storeInfo?.id || ''
+        owner_id: storeInfo?.id || storeInfo?.owner_id || storeInfo?.user_id || ''
       };
 
       const customer = await EcommerceService.createCustomer(customerData);
@@ -225,7 +225,7 @@ const Checkout: React.FC = () => {
         product_name: cartItems.map(item => `${item.name} (${item.quantity}x)`).join(', '),
         customer_id: customer.id,
         customer_name: customerForm.name,
-        seller_id: storeInfo?.id || '',
+        seller_id: storeInfo?.id || storeInfo?.owner_id || storeInfo?.user_id || '',
         seller_name: storeInfo?.store_name || storeInfo?.name || '',
         status: 'entrada' as OrderStatus,
         notes: orderNote,

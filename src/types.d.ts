@@ -102,7 +102,7 @@ export interface StoreInfo {
   paymentMethods?: string[];
 }
 
-export type OrderStatus = 'entrada' | 'producao' | 'entrega' | 'finalizado';
+export type OrderStatus = 'entrada' | 'preparando' | 'saiu_para_entrega' | 'cancelado' | 'pendente';
 
 export interface NewOrderKanbanData {
   product_id: string;
