@@ -1,11 +1,16 @@
 
 
+
 export interface User {
   id: string;
   email?: string;
   user_metadata?: {
     full_name?: string;
     avatar_url?: string;
+    name?: string;
+  };
+  app_metadata?: {
+    seller_id?: string;
   };
 }
 
@@ -71,6 +76,7 @@ export interface StoreInfo {
   name?: string;
   user_id?: string;
   owner_id?: string;
+  ownerId?: string;
   shippingMethods?: Array<{
     id: string;
     name: string;
@@ -93,4 +99,3 @@ export interface NewOrderKanbanData {
   notes: string;
   total_amount: number;
 }
-
