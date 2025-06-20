@@ -1,21 +1,10 @@
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { useState, useEffect, ReactNode } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Home, FileText, Printer, LogOut, Menu, ChevronLeft, ChevronRight, Settings, Users, BarChart, Package, Download, X, UserCog, ShoppingBag, ShoppingCart } from 'lucide-react';
 import Logo from './ui/Logo';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarProvider,
-  SidebarTrigger,
-  SidebarInset,
-} from '@/components/ui/sidebar';
+
 
 interface LayoutProps {
   children: ReactNode;
@@ -175,14 +164,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </li>
               <li>
                 <Link 
-                  to="/products" 
+                  to="/products-system" 
                   className={`flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-3 rounded-md ${
-                    isActive('/products') 
+                    isActive('/products-system') 
                       ? 'bg-fiscal-green-50 text-fiscal-green-700' 
                       : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
-                  <Package size={20} className={isActive('/products') ? 'text-fiscal-green-500' : ''} />
+                  <Package size={20} className={isActive('/products-system') ? 'text-fiscal-green-500' : ''} />
                   {!collapsed && <span className="ml-3">Produtos</span>}
                 </Link>
               </li>
@@ -255,25 +244,25 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <Link 
                   to="/ecommerce" 
                   className={`flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-3 rounded-md ${
-                    isActive('/ecommerce') && !location.pathname.startsWith('/ecommerce/dashboard')
+                    isActive('/ecommerce') && !location.pathname.startsWith('/ecommerce-admin/dashboard')
                       ? 'bg-fiscal-green-50 text-fiscal-green-700' 
                       : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
-                  <ShoppingBag size={20} className={isActive('/ecommerce') && !location.pathname.startsWith('/ecommerce/dashboard') ? 'text-fiscal-green-500' : ''} />
+                  <ShoppingBag size={20} className={isActive('/ecommerce') && !location.pathname.startsWith('/ecommerce-admin/dashboard') ? 'text-fiscal-green-500' : ''} />
                   {!collapsed && <span className="ml-3">Ver Loja</span>}
                 </Link>
               </li>
               <li className="mt-1">
                 <Link
-                  to="/ecommerce/dashboard"
+                  to="/ecommerce-admin/dashboard"
                   className={`flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-3 rounded-md ${
-                    location.pathname.startsWith('/ecommerce/dashboard')
+                    location.pathname.startsWith('/ecommerce-admin/dashboard')
                       ? 'bg-fiscal-green-50 text-fiscal-green-700' 
                       : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
-                  <ShoppingCart size={20} className={location.pathname.startsWith('/ecommerce/dashboard') ? 'text-fiscal-green-500' : ''} />
+                  <ShoppingCart size={20} className={location.pathname.startsWith('/ecommerce-admin/dashboard') ? 'text-fiscal-green-500' : ''} />
                   {!collapsed && <span className="ml-3">Dashboard E-commerce</span>}
                 </Link>
               </li>
@@ -376,11 +365,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </li>
               <li>
                 <Link 
-                  to="/products" 
-                  className={`flex items-center px-4 py-3.5 ${isActive('/products') ? 'bg-fiscal-green-50 text-fiscal-green-700' : 'text-gray-700'}`}
+                  to="/products-system" 
+                  className={`flex items-center px-4 py-3.5 ${isActive('/products-system') ? 'bg-fiscal-green-50 text-fiscal-green-700' : 'text-gray-700'}`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <Package size={20} className={`mr-3 ${isActive('/products') ? 'text-fiscal-green-500' : ''}`} />
+                  <Package size={20} className={`mr-3 ${isActive('/products-system') ? 'text-fiscal-green-500' : ''}`} />
                   <span>Produtos</span>
                 </Link>
               </li>
@@ -439,32 +428,32 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <Link 
                   to="/ecommerce" 
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center px-4 py-3.5 ${isActive('/ecommerce') && !location.pathname.startsWith('/ecommerce/dashboard') ? 'bg-fiscal-green-50 text-fiscal-green-700' : 'text-gray-700'}`}
+                  className={`flex items-center px-4 py-3.5 ${isActive('/ecommerce') && !location.pathname.startsWith('/ecommerce-admin/dashboard') ? 'bg-fiscal-green-50 text-fiscal-green-700' : 'text-gray-700'}`}
                 >
-                  <ShoppingBag size={20} className={`mr-3 ${isActive('/ecommerce') && !location.pathname.startsWith('/ecommerce/dashboard') ? 'text-fiscal-green-500' : ''}`} />
+                  <ShoppingBag size={20} className={`mr-3 ${isActive('/ecommerce') && !location.pathname.startsWith('/ecommerce-admin/dashboard') ? 'text-fiscal-green-500' : ''}`} />
                   <span>Ver Loja</span>
                 </Link>
               </li>
               <li>
-                <div className={`px-4 py-3.5 ${location.pathname.startsWith('/ecommerce/dashboard') ? 'bg-fiscal-green-50 text-fiscal-green-700' : 'text-gray-700'}`}>
+                <div className={`px-4 py-3.5 ${location.pathname.startsWith('/ecommerce-admin/dashboard') ? 'bg-fiscal-green-50 text-fiscal-green-700' : 'text-gray-700'}`}>
                   <Link 
-                    to="/ecommerce/dashboard" 
+                    to="/ecommerce-admin/dashboard" 
                     onClick={() => setMobileMenuOpen(false)}
                     className="font-medium flex items-center"
                   >
-                    <ShoppingCart size={18} className={`mr-2 ${location.pathname.startsWith('/ecommerce/dashboard') ? 'text-fiscal-green-500' : ''}`} />
+                    <ShoppingCart size={18} className={`mr-2 ${location.pathname.startsWith('/ecommerce-admin/dashboard') ? 'text-fiscal-green-500' : ''}`} />
                     Dashboard E-commerce
                   </Link>
                   <ul className="ml-6 space-y-2 mt-2">
                     <li>
                       <Link 
-                        to="/ecommerce/dashboard" 
+                        to="/ecommerce-admin/dashboard" 
                         onClick={() => setMobileMenuOpen(false)}
                         className={`flex items-center px-2 py-2 text-sm rounded-md hover:bg-gray-100 ${
-                          isActive('/ecommerce/dashboard') ? 'bg-fiscal-green-100 text-fiscal-green-700' : 'text-gray-700'
+                          isActive('/ecommerce-admin/dashboard') ? 'bg-fiscal-green-100 text-fiscal-green-700' : 'text-gray-700'
                         }`}
                       >
-                        <BarChart size={16} className={`mr-2 ${isActive('/ecommerce/dashboard') ? 'text-fiscal-green-500' : ''}`} />
+                        <BarChart size={16} className={`mr-2 ${isActive('/ecommerce-admin/dashboard') ? 'text-fiscal-green-500' : ''}`} />
                         <span>Visão Geral</span>
                       </Link>
                     </li>
@@ -535,48 +524,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </nav>
         
-        {/* Floating Bottom Navigation Bar - Visible only on mobile */}
-        <div className="fixed bottom-4 left-0 right-0 mx-auto w-[95%] max-w-sm bg-white border border-gray-200 rounded-full shadow-lg md:hidden">
-          <div className="flex justify-around items-center py-2">
-            <Link 
-              to="/dashboard" 
-              className={`flex flex-col items-center p-2 ${isActive('/dashboard') ? 'text-fiscal-green-600' : 'text-gray-600'}`}
-            >
-              <Home size={22} className={isActive('/dashboard') ? 'text-fiscal-green-500' : ''} />
-              <span className="text-xs mt-1 font-medium">Início</span>
-            </Link>
-            <Link 
-              to="/ecommerce" 
-              className={`flex flex-col items-center p-2 ${isActive('/ecommerce') && !location.pathname.startsWith('/ecommerce/dashboard') ? 'text-fiscal-green-600' : 'text-gray-600'}`}
-            >
-              <ShoppingBag size={22} className={isActive('/ecommerce') && !location.pathname.startsWith('/ecommerce/dashboard') ? 'text-fiscal-green-500' : ''} />
-              <span className="text-xs mt-1 font-medium">Loja</span>
-            </Link>
-            <button
-              onClick={toggleMobileMenu}
-              className="flex flex-col items-center justify-center p-2 relative"
-            >
-              <div className="bg-fiscal-green-500 rounded-full h-12 w-12 flex items-center justify-center -mt-5 shadow-md">
-                <Menu size={24} className="text-white" />
-              </div>
-              <span className="text-xs mt-1 text-fiscal-green-600 font-medium">Menu</span>
-            </button>
-            <Link 
-              to="/notes" 
-              className={`flex flex-col items-center p-2 ${isActive('/notes') ? 'text-fiscal-green-600' : 'text-gray-600'}`}
-            >
-              <FileText size={22} className={isActive('/notes') ? 'text-fiscal-green-500' : ''} />
-              <span className="text-xs mt-1 font-medium">Notas</span>
-            </Link>
-            <Link 
-              to="/ecommerce/dashboard" 
-              className={`flex flex-col items-center p-2 ${location.pathname.startsWith('/ecommerce/dashboard') ? 'text-fiscal-green-600' : 'text-gray-600'}`}
-            >
-              <ShoppingCart size={22} className={location.pathname.startsWith('/ecommerce/dashboard') ? 'text-fiscal-green-500' : ''} />
-              <span className="text-xs mt-1 font-medium">Painel</span>
-            </Link>
-          </div>
-        </div>
+
         
         {/* Overlay quando o menu está aberto */}
         {mobileMenuOpen && (

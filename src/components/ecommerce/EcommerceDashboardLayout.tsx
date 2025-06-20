@@ -69,9 +69,9 @@ const EcommerceDashboardLayout: React.FC<EcommerceDashboardLayoutProps> = ({ chi
             <li className="my-3 border-t border-gray-100"></li>
             <li>
               <Link
-                to="/ecommerce/dashboard"
+                to="/ecommerce-admin/dashboard"
                 className={`flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 ${
-                  isActive('/ecommerce/dashboard')
+                  isActive('/ecommerce-admin/dashboard')
                     ? 'bg-fiscal-green-50 text-fiscal-green-700 border border-fiscal-green-200 shadow-sm'
                     : 'text-gray-700 hover:bg-gray-50 hover:shadow-sm border border-transparent hover:border-gray-100'
                 }`}
@@ -194,9 +194,9 @@ const EcommerceDashboardLayout: React.FC<EcommerceDashboardLayoutProps> = ({ chi
               <span className="text-xs mt-1 font-medium">Loja</span>
             </Link>
             <Link 
-              to="/ecommerce/dashboard"
+              to="/ecommerce-admin/dashboard"
               className={`flex flex-col items-center p-2 transition-colors duration-200 ${
-                isActive('/ecommerce/dashboard') ? 'text-fiscal-green-600' : 'text-gray-600 hover:text-fiscal-green-600'
+                isActive('/ecommerce-admin/dashboard') ? 'text-fiscal-green-600' : 'text-gray-600 hover:text-fiscal-green-600'
               }`}
             >
               <BarChart size={22} />
@@ -276,10 +276,10 @@ const EcommerceDashboardLayout: React.FC<EcommerceDashboardLayoutProps> = ({ chi
                 </li>
                 <li>
                   <Link
-                    to="/ecommerce/dashboard"
+                    to="/ecommerce-admin/dashboard"
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center px-3 py-3 rounded-xl transition-all duration-200 ${
-                      isActive('/ecommerce/dashboard') 
+                      isActive('/ecommerce-admin/dashboard') 
                         ? 'bg-fiscal-green-50 text-fiscal-green-700 border border-fiscal-green-200 shadow-sm' 
                         : 'text-gray-700 hover:bg-gray-50 hover:shadow-sm border border-transparent hover:border-gray-100'
                     }`}
@@ -379,4 +379,4 @@ const EcommerceDashboardLayout: React.FC<EcommerceDashboardLayoutProps> = ({ chi
   );
 };
 
-export default EcommerceDashboardLayout; 
+export default EcommerceDashboardLayout;

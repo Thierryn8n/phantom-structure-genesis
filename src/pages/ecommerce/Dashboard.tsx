@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import EcommerceDashboardLayout from '@/components/ecommerce/EcommerceDashboardLayout';
 import { 
   ArrowUpRight, ShoppingBag, Users, FileText, DollarSign, Settings, 
   Package, Clock, TrendingUp, UserPlus, MoreHorizontal, AlertTriangle, 
@@ -21,6 +20,7 @@ import { EcommerceService, DashboardOverviewData } from '@/services/ecommerceSer
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import "./dashboard-styles.css";
 
 // Cores personalizadas para gráficos
 const CHART_COLORS = {
@@ -259,20 +259,20 @@ const EcommerceDashboard: React.FC = () => {
       sales: day.sales,
       accumulated
     };
-  });
+  }) || [];
 
   return (
-    <EcommerceDashboardLayout>
-      <div className="space-y-8 p-4 md:p-6 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2UyZThmMCIgb3BhY2l0eT0iMC40IiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] min-h-screen rounded-[20px] shadow-sm">
-        <div className="container mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800">Visão Geral da Loja</h1>
-              <p className="text-gray-500 mt-1">
-                Acompanhe as métricas chave e atividades recentes da sua loja.
-              </p>
-            </div>
-            <div className="flex gap-2">
+    <>
+    <div className="dashboard-bg space-y-8 p-4 md:p-6">
+      <div className="container mx-auto">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">Visão Geral da Loja</h1>
+            <p className="text-gray-500 mt-1">
+              Acompanhe as métricas chave e atividades recentes da sua loja.
+            </p>
+          </div>
+          <div className="flex gap-2">
               <Button 
                 variant="outline" 
                 onClick={fetchDashboardData}
@@ -281,30 +281,30 @@ const EcommerceDashboard: React.FC = () => {
                 <TrendingUp size={16} className="mr-2" />
                 Atualizar Dados
               </Button>
-            </div>
-          </div>
+        </div>
+      </div>
           
-          <Tabs defaultValue="overview" className="w-full" onValueChange={setActiveTab}>
-            <div className="overflow-x-auto pb-2">
-              <TabsList className="inline-flex bg-white border border-gray-300 p-1 rounded-[20px] shadow-sm mb-6 w-auto">
-                <TabsTrigger 
-                  value="overview" 
-                  className="data-[state=active]:bg-yellow-50 data-[state=active]:text-yellow-600 data-[state=active]:shadow-sm data-[state=active]:font-medium data-[state=active]:border data-[state=active]:border-yellow-200 text-sm px-4 py-2 rounded-xl transition-all border border-transparent hover:border-gray-200"
-                >
-                  Visão Geral
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="sales" 
-                  className="data-[state=active]:bg-yellow-50 data-[state=active]:text-yellow-600 data-[state=active]:shadow-sm data-[state=active]:font-medium data-[state=active]:border data-[state=active]:border-yellow-200 text-sm px-4 py-2 rounded-xl transition-all border border-transparent hover:border-gray-200"
-                >
-                  Vendas
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="products" 
-                  className="data-[state=active]:bg-yellow-50 data-[state=active]:text-yellow-600 data-[state=active]:shadow-sm data-[state=active]:font-medium data-[state=active]:border data-[state=active]:border-yellow-200 text-sm px-4 py-2 rounded-xl transition-all border border-transparent hover:border-gray-200"
-                >
+      <Tabs defaultValue="overview" className="w-full" onValueChange={setActiveTab}>
+        <div className="overflow-x-auto pb-2">
+          <TabsList className="inline-flex bg-white border border-gray-300 p-1 rounded-[20px] shadow-sm mb-6 w-auto">
+            <TabsTrigger 
+              value="overview" 
+              className="data-[state=active]:bg-yellow-50 data-[state=active]:text-yellow-600 data-[state=active]:shadow-sm data-[state=active]:font-medium data-[state=active]:border data-[state=active]:border-yellow-200 text-sm px-4 py-2 rounded-xl transition-all border border-transparent hover:border-gray-200"
+            >
+              Visão Geral
+            </TabsTrigger>
+            <TabsTrigger 
+              value="sales" 
+              className="data-[state=active]:bg-yellow-50 data-[state=active]:text-yellow-600 data-[state=active]:shadow-sm data-[state=active]:font-medium data-[state=active]:border data-[state=active]:border-yellow-200 text-sm px-4 py-2 rounded-xl transition-all border border-transparent hover:border-gray-200"
+            >
+              Vendas
+            </TabsTrigger>
+            <TabsTrigger 
+              value="products" 
+              className="data-[state=active]:bg-yellow-50 data-[state=active]:text-yellow-600 data-[state=active]:shadow-sm data-[state=active]:font-medium data-[state=active]:border data-[state=active]:border-yellow-200 text-sm px-4 py-2 rounded-xl transition-all border border-transparent hover:border-gray-200"
+            >
                   Produtos
-                </TabsTrigger>
+            </TabsTrigger>
               </TabsList>
           </div>
           
@@ -823,17 +823,18 @@ const EcommerceDashboard: React.FC = () => {
                       <div>
                         <h3 className="font-semibold text-gray-700 group-hover:text-gray-900">{action.title}</h3>
                         <p className="text-xs text-gray-500">Acessar seção</p>
-                </div>
+                      </div>
                       <ArrowUpRight size={18} className="ml-auto text-gray-400 group-hover:text-gray-600 transition-colors" />
                     </CardContent>
                   </Card>
                 </Link>
               ))}
-              </div>
+            </div>
           </div>
         </div>
       </div>
-    </EcommerceDashboardLayout>
+    </div>
+    </>
   );
 };
 

@@ -6,6 +6,12 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import DashboardPage from "@/pages/Dashboard";
 import NotesManagement from "@/pages/NotesManagement";
 import ProductsSystemPage from "@/pages/ProductManagement";
+import Settings from "@/pages/Settings";
+import SellersManagement from "@/pages/SellersManagement";
+import CustomersManagement from "@/pages/CustomersManagement";
+import Print from "@/pages/Print";
+import Reports from "@/pages/Reports";
+import NewNote from "@/pages/NewNote";
 
 // Importações do E-commerce
 import EcommerceLayout from "@/components/ecommerce/EcommerceLayout";
@@ -21,7 +27,7 @@ import SearchResults from "@/pages/ecommerce/SearchResults";
 import EcommerceDashboardLayout from "@/components/ecommerce/EcommerceDashboardLayout";
 import EcommerceDashboard from "@/pages/ecommerce/Dashboard";
 import OrdersKanban from "@/pages/ecommerce/OrdersKanban";
-import EcommerceProducts from "@/pages/ecommerce/Products";
+// Removida importação do Products que não existe
 import EcommerceCategories from "@/pages/ecommerce/Categories";
 import EcommerceCustomers from "@/pages/ecommerce/Customers";
 import EcommerceSettings from "@/pages/ecommerce/Settings";
@@ -71,8 +77,32 @@ export const router = createBrowserRouter([
         element: <ProtectedRoute><NotesManagement /></ProtectedRoute> 
       },
       { 
+        path: "notes/new", 
+        element: <ProtectedRoute><NewNote /></ProtectedRoute> 
+      },
+      { 
         path: "products-system", 
         element: <ProtectedRoute><ProductsSystemPage /></ProtectedRoute> 
+      },
+      { 
+        path: "settings", 
+        element: <ProtectedRoute><Settings /></ProtectedRoute> 
+      },
+      { 
+        path: "sellers", 
+        element: <ProtectedRoute><SellersManagement /></ProtectedRoute> 
+      },
+      { 
+        path: "customers", 
+        element: <ProtectedRoute><CustomersManagement /></ProtectedRoute> 
+      },
+      { 
+        path: "print", 
+        element: <ProtectedRoute><Print /></ProtectedRoute> 
+      },
+      { 
+        path: "reports", 
+        element: <ProtectedRoute><Reports /></ProtectedRoute> 
       },
 
       // Rotas do Painel do E-commerce (com autenticação)
@@ -83,7 +113,7 @@ export const router = createBrowserRouter([
           { index: true, element: <Navigate to="dashboard" replace /> },
           { path: "dashboard", element: <EcommerceDashboard /> },
           { path: "orders", element: <OrdersKanban /> },
-          { path: "products", element: <EcommerceProducts /> },
+          { path: "products", element: <Navigate to="dashboard" replace /> },
           { path: "categories", element: <EcommerceCategories /> },
           { path: "customers", element: <EcommerceCustomers /> },
           { path: "settings", element: <EcommerceSettings /> },
@@ -95,4 +125,4 @@ export const router = createBrowserRouter([
   // Rotas de Autenticação
   { path: "/login", element: <Login /> },
   { path: "/forgot-password", element: <ForgotPassword /> },
-]); 
+]);

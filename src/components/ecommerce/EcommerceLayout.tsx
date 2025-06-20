@@ -38,9 +38,9 @@ const EcommerceLayout: React.FC<EcommerceLayoutProps> = ({ children }) => {
             <ul className="space-y-1">
               <li>
                 <Link
-                  to="/ecommerce/dashboard"
+                  to="/ecommerce-admin/dashboard"
                   className={`flex items-center px-3 py-2.5 rounded-md transition-colors ${
-                    isActive('/ecommerce/dashboard')
+                    isActive('/ecommerce-admin/dashboard')
                       ? 'bg-fiscal-green-50 text-fiscal-green-700'
                       : 'text-gray-700 hover:bg-gray-50'
                   }`}
@@ -116,4 +116,4 @@ const EcommerceLayout: React.FC<EcommerceLayoutProps> = ({ children }) => {
   );
 };
 
-export default EcommerceLayout; 
+export default EcommerceLayout;

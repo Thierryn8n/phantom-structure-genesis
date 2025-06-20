@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../integrations/supabase/client';
 
 // Tipos para as configurações da loja
 export interface EcommerceSettings {
@@ -178,10 +178,7 @@ const CACHE_KEY_CARD_STYLES = 'fiscal_flow_card_styles';
 const CACHE_KEY_THEMES = 'fiscal_flow_themes';
 const CACHE_DURATION = 1000 * 60 * 10; // 10 minutos
 
-// Cria um client Supabase com as variáveis de ambiente
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Usar a instância principal do Supabase client
 
 /**
  * Hook para gerenciar as configurações de tema da loja
@@ -682,4 +679,4 @@ export function useStoreTheme(): UseStoreThemeReturn {
   };
 }
 
-export default useStoreTheme; 
+export default useStoreTheme;

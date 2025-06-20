@@ -21,7 +21,7 @@ import {
   User,
   Factory
 } from 'lucide-react';
-import EcommerceDashboardLayout from '@/components/ecommerce/EcommerceDashboardLayout';
+
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 
@@ -199,13 +199,12 @@ const OrdersKanban: React.FC = () => {
 
   const handleMoveOrder = async (order: OrderKanban, newStatus: OrderKanban['status']) => {
     try {
-      await EcommerceService.updateOrderKanbanStatus(order.id, newStatus);
-      setOrders(prevOrders =>
-        prevOrders.map(o =>
+      await EcommerceService.updateOrderStatus(order.id, newStatus);
+      setOrders(prevOrders => 
+        prevOrders.map(o => 
           o.id === order.id ? { ...o, status: newStatus } : o
         )
       );
-      
       toast({
         title: "Status atualizado",
         description: `Pedido movido para ${statusLabels[newStatus]}`
@@ -221,38 +220,31 @@ const OrdersKanban: React.FC = () => {
   };
 
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = 
-      order.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.seller_name.toLowerCase().includes(searchTerm.toLowerCase());
-    
+    const matchesSearch = order.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         order.seller_name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = selectedStatus === 'all' || order.status === selectedStatus;
-    
     return matchesSearch && matchesStatus;
   });
 
-  const getOrdersByStatus = (status: OrderKanban['status']) => {
-    return filteredOrders.filter(order => order.status === status);
-  };
-
-  const statusList: OrderKanban['status'][] = ['entrada', 'preparando', 'producao', 'saiu_para_entrega', 'cancelado', 'pendente'];
+  const groupedOrders = filteredOrders.reduce((acc, order) => {
+    if (!acc[order.status]) {
+      acc[order.status] = [];
+    }
+    acc[order.status].push(order);
+    return acc;
+  }, {} as Record<OrderKanban['status'], OrderKanban[]>);
 
   if (isLoading) {
     return (
-      <EcommerceDashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <RefreshCcw className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <p>Carregando pedidos...</p>
-          </div>
-        </div>
-      </EcommerceDashboardLayout>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+      </div>
     );
   }
 
   return (
-    <EcommerceDashboardLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -261,58 +253,55 @@ const OrdersKanban: React.FC = () => {
               Gerencie o fluxo dos seus pedidos
             </p>
           </div>
-          <Button onClick={loadOrders} variant="outline">
-            <RefreshCcw className="h-4 w-4 mr-2" />
-            Atualizar
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={loadOrders}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <RefreshCcw className="h-4 w-4" />
+              Atualizar
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    placeholder="Buscar por produto, cliente ou vendedor..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              <div className="sm:w-48">
-                <select
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value as OrderKanban['status'] | 'all')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="all">Todos os Status</option>
-                  {statusList.map((status) => (
-                    <option key={status} value={status}>
-                      {statusLabels[status]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Buscar por produto, cliente ou vendedor..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value as OrderKanban['status'] | 'all')}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">Todos os Status</option>
+            {Object.entries(statusLabels).map(([status, label]) => (
+              <option key={status} value={status}>{label}</option>
+            ))}
+          </select>
+        </div>
 
         {/* Kanban Board */}
         <div className="overflow-x-auto">
-          <div className="flex gap-6 pb-4" style={{ minWidth: 'fit-content' }}>
-            {statusList.map((status) => {
-              const statusOrders = getOrdersByStatus(status);
+          <div className="flex gap-6 pb-4 min-w-max">
+            {Object.entries(statusLabels).map(([status, label]) => {
+              const statusOrders = groupedOrders[status as OrderKanban['status']] || [];
               return (
                 <KanbanColumn
                   key={status}
-                  title={statusLabels[status]}
-                  status={status}
+                  title={label}
+                  status={status as OrderKanban['status']}
                   orders={statusOrders}
-                  icon={statusIcons[status]}
-                  color={statusColors[status]}
+                  icon={statusIcons[status as OrderKanban['status']]}
+                  color={statusColors[status as OrderKanban['status']]}
                   onMoveOrder={handleMoveOrder}
                   count={statusOrders.length}
                 />
@@ -321,22 +310,25 @@ const OrdersKanban: React.FC = () => {
           </div>
         </div>
 
-        {filteredOrders.length === 0 && !isLoading && (
-          <Card>
-            <CardContent className="text-center py-12">
-              <PackageCheck className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-              <h3 className="text-lg font-medium mb-2">Nenhum pedido encontrado</h3>
-              <p className="text-muted-foreground">
-                {searchTerm || selectedStatus !== 'all' 
-                  ? "Tente ajustar os filtros para encontrar pedidos."
-                  : "Quando houver pedidos, eles aparecerão aqui."
-                }
-              </p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    </EcommerceDashboardLayout>
+        {/* Summary */}
+        <div className="bg-white rounded-lg border p-6">
+          <h3 className="text-lg font-semibold mb-4">Resumo</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {Object.entries(statusLabels).map(([status, label]) => {
+              const count = groupedOrders[status as OrderKanban['status']]?.length || 0;
+              return (
+                <div key={status} className="text-center">
+                  <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-2 ${statusColors[status as OrderKanban['status']]}`}>
+                    {statusIcons[status as OrderKanban['status']]}
+                  </div>
+                  <p className="text-sm font-medium">{label}</p>
+                  <p className="text-2xl font-bold">{count}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+    </div>
   );
 };
 

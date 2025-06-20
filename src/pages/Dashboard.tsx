@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Layout from '@/components/Layout';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   FileText, Printer, ChevronRight, BarChart2, LineChart as LineChartIcon, 
@@ -82,44 +81,14 @@ const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Verificação de autenticação e redirecionamento
+  // Verificação de autenticação simplificada
   useEffect(() => {
-    // Verificar autenticação apenas uma vez
-    if (isAuthChecked) return;
-    
-    // Verificar se o usuário está autenticado
-    const checkAuth = async () => {
-      try {
-        // Verificar sessão atual do Supabase
-        const { data: sessionData } = await supabase.auth.getSession();
-        
-        if (!sessionData.session) {
-          console.log('Usuário não autenticado, redirecionando para login');
-          toast({
-            title: "Acesso Restrito",
-            description: "Faça login para acessar o Dashboard",
-            variant: "destructive"
-          });
-          
-          // Redirecionar para página de login com parâmetro de retorno
-          navigate('/auth/login?returnUrl=/dashboard');
-        }
-        
-        // Marcar que a verificação foi realizada
-        setIsAuthChecked(true);
-      } catch (error) {
-        console.error('Erro ao verificar autenticação:', error);
-        navigate('/auth/login');
-      }
-    };
-    
-    // Pequeno timeout para evitar redirecionamentos desnecessários durante o carregamento inicial
-    const timeoutId = setTimeout(() => {
-      checkAuth();
-    }, 500);
-    
-    return () => clearTimeout(timeoutId);
-  }, [navigate, toast, isAuthChecked]);
+    if (!user) {
+      navigate('/auth/login');
+      return;
+    }
+    setIsAuthChecked(true);
+  }, [user, navigate]);
   
   // Função para buscar orçamentos recentes
   const fetchRecentQuotes = async () => {
@@ -369,21 +338,20 @@ const Dashboard: React.FC = () => {
   // Carregar dados ao montar o componente
   useEffect(() => {
     // Só carregar dados se o usuário estiver autenticado
-    if (user?.id && isAuthChecked) {
+    if (user?.id) {
       loadDashboardData();
     }
-  }, [user?.id, isAuthChecked]);
+  }, [user?.id]);
   
   return (
-    <Layout>
-      <div className="space-y-8 bg-slate-50 p-6 rounded-lg bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2UyZThmMCIgb3BhY2l0eT0iMC40IiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')]">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800">Painel de Controle</h1>
-            <p className="text-gray-500 mt-1">
-              Acompanhe suas métricas e atividades recentes.
-            </p>
-          </div>
+    <div className="space-y-8 bg-slate-50 p-6 rounded-lg bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2UyZThmMCIgb3BhY2l0eT0iMC40IiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')]">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">Painel de Controle</h1>
+          <p className="text-gray-500 mt-1">
+            Acompanhe suas métricas e atividades recentes.
+          </p>
+        </div>
           <div className="flex gap-2 mt-4 md:mt-0">
             <Button variant="outline">
               <Calendar size={16} className="mr-2" />
@@ -626,7 +594,7 @@ const Dashboard: React.FC = () => {
               </Link>
                   
                           <Link 
-                    to="/ecommerce/dashboard"
+                    to="/ecommerce-admin/dashboard"
                     className="flex items-center justify-between p-4 border border-black rounded-md hover:bg-fiscal-gray-50 hover:border-fiscal-green-500 transition-colors"
                   >
                     <div className="flex items-center">
@@ -898,8 +866,7 @@ const Dashboard: React.FC = () => {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
-    </Layout>
+    </div>
   );
 };
 
