@@ -356,4 +356,32 @@ export const getFileNameFromUrl = (url: string): string | null => {
     console.error('URL inválida:', error);
     return null;
   }
-}; 
+};
+
+// Função para fazer upload de uma imagem de produto
+export const uploadProductImage = async (file: File, productId: string): Promise<string> => {
+  try {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${productId}-${Date.now()}.${fileExt}`;
+    const filePath = `products/${fileName}`;
+
+    const { data, error } = await supabase.storage
+      .from('product-images')
+      .upload(filePath, file);
+
+    if (error) {
+      console.error('Erro no upload:', error);
+      throw new Error(`Erro no upload: ${error.message}`);
+    }
+
+    // Obter URL pública
+    const { data: urlData } = supabase.storage
+      .from('product-images')
+      .getPublicUrl(filePath);
+
+    return urlData.publicUrl;
+  } catch (error) {
+    console.error('Erro ao fazer upload da imagem do produto:', error);
+    throw error;
+  }
+};

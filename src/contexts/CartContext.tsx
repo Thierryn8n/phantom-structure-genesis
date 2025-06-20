@@ -1,144 +1,124 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { EcommerceProduct } from '@/services/ecommerceService';
 
-// Tipos
-export interface CartItem {
-  id: string;
-  name: string;
-  price: number;
+export interface CartItem extends EcommerceProduct {
   quantity: number;
-  imageUrl?: string;
-  unit?: string;
   subtotal: number;
 }
 
-interface CartContextData {
-  cartItems: CartItem[];
-  cart: CartItem[];
-  addToCart: (item: CartItem) => void;
-  removeFromCart: (itemId: string) => void;
-  updateCartItemQuantity: (itemId: string, quantity: number) => void;
-  updateQuantity: (itemId: string, quantity: number) => void;
+interface CartContextType {
+  items: CartItem[];
+  addToCart: (product: EcommerceProduct, quantity?: number) => void;
+  removeFromCart: (productId: string) => void;
+  updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
-  getCartTotal: () => number;
-  getCartItemCount: () => number;
-  totalItems: number;
-  totalPrice: number;
-  isCartOpen: boolean;
-  setIsCartOpen: (open: boolean) => void;
+  getTotalItems: () => number;
+  getTotalPrice: () => number;
 }
 
-// Contexto
-const CartContext = createContext<CartContextData>({} as CartContextData);
+const CartContext = createContext<CartContextType | undefined>(undefined);
 
-// Hook personalizado para usar o contexto
-export function useCart(): CartContextData {
-  const context = useContext(CartContext);
-  
-  if (!context) {
-    throw new Error('useCart deve ser usado dentro de um CartProvider');
-  }
-  
-  return context;
-}
-
-// Provider
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Estado do carrinho
-  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
-    // Recupera os itens do carrinho do localStorage
-    const storedItems = localStorage.getItem('@FiscalFlow:cart');
-    return storedItems ? JSON.parse(storedItems) : [];
-  });
+  const [items, setItems] = useState<CartItem[]>([]);
 
-  const [isCartOpen, setIsCartOpen] = useState(false);
-
-  // Salva os itens do carrinho no localStorage sempre que houver alteração
+  // Carregar carrinho do localStorage na inicialização
   useEffect(() => {
-    localStorage.setItem('@FiscalFlow:cart', JSON.stringify(cartItems));
-  }, [cartItems]);
-
-  // Adiciona um item ao carrinho
-  const addToCart = (newItem: CartItem) => {
-    setCartItems(currentItems => {
-      const existingItemIndex = currentItems.findIndex(item => item.id === newItem.id);
-
-      if (existingItemIndex >= 0) {
-        // Se o item já existe, atualiza a quantidade
-        const updatedItems = [...currentItems];
-        updatedItems[existingItemIndex].quantity += newItem.quantity;
-        updatedItems[existingItemIndex].subtotal = updatedItems[existingItemIndex].quantity * updatedItems[existingItemIndex].price;
-        return updatedItems;
+    const savedCart = localStorage.getItem('ecommerce-cart');
+    if (savedCart) {
+      try {
+        setItems(JSON.parse(savedCart));
+      } catch (error) {
+        console.error('Erro ao carregar carrinho do localStorage:', error);
       }
+    }
+  }, []);
 
-      // Se o item não existe, adiciona ao carrinho
-      const itemWithSubtotal = {
-        ...newItem,
-        subtotal: newItem.price * newItem.quantity
+  // Salvar carrinho no localStorage sempre que mudar
+  useEffect(() => {
+    localStorage.setItem('ecommerce-cart', JSON.stringify(items));
+  }, [items]);
+
+  const addToCart = (product: EcommerceProduct, quantity: number = 1) => {
+    setItems(currentItems => {
+      const existingItem = currentItems.find(item => item.id === product.id);
+      
+      if (existingItem) {
+        return currentItems.map(item =>
+          item.id === product.id
+            ? { 
+                ...item, 
+                quantity: item.quantity + quantity,
+                subtotal: (item.quantity + quantity) * item.price
+              }
+            : item
+        );
+      }
+      
+      const newItem: CartItem = {
+        ...product,
+        quantity,
+        subtotal: product.price * quantity
       };
-      return [...currentItems, itemWithSubtotal];
+      
+      return [...currentItems, newItem];
     });
   };
 
-  // Remove um item do carrinho
-  const removeFromCart = (itemId: string) => {
-    setCartItems(currentItems => currentItems.filter(item => item.id !== itemId));
+  const removeFromCart = (productId: string) => {
+    setItems(currentItems => currentItems.filter(item => item.id !== productId));
   };
 
-  // Atualiza a quantidade de um item
-  const updateCartItemQuantity = (itemId: string, quantity: number) => {
-    setCartItems(currentItems =>
+  const updateQuantity = (productId: string, quantity: number) => {
+    if (quantity <= 0) {
+      removeFromCart(productId);
+      return;
+    }
+    
+    setItems(currentItems =>
       currentItems.map(item =>
-        item.id === itemId ? { 
-          ...item, 
-          quantity,
-          subtotal: item.price * quantity
-        } : item
+        item.id === productId
+          ? { 
+              ...item, 
+              quantity,
+              subtotal: item.price * quantity
+            }
+          : item
       )
     );
   };
 
-  // Alias para updateCartItemQuantity
-  const updateQuantity = updateCartItemQuantity;
-
-  // Limpa o carrinho
   const clearCart = () => {
-    setCartItems([]);
+    setItems([]);
   };
 
-  // Calcula o total do carrinho
-  const getCartTotal = () => {
-    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+  const getTotalItems = () => {
+    return items.reduce((total, item) => total + item.quantity, 0);
   };
 
-  // Retorna o número total de itens no carrinho
-  const getCartItemCount = () => {
-    return cartItems.reduce((total, item) => total + item.quantity, 0);
+  const getTotalPrice = () => {
+    return items.reduce((total, item) => total + item.subtotal, 0);
   };
-
-  // Propriedades calculadas
-  const totalItems = getCartItemCount();
-  const totalPrice = getCartTotal();
 
   return (
-    <CartContext.Provider
-      value={{
-        cartItems,
-        cart: cartItems, // Alias para compatibilidade
-        addToCart,
-        removeFromCart,
-        updateCartItemQuantity,
-        updateQuantity,
-        clearCart,
-        getCartTotal,
-        getCartItemCount,
-        totalItems,
-        totalPrice,
-        isCartOpen,
-        setIsCartOpen,
-      }}
-    >
+    <CartContext.Provider value={{
+      items,
+      addToCart,
+      removeFromCart,
+      updateQuantity,
+      clearCart,
+      getTotalItems,
+      getTotalPrice
+    }}>
       {children}
     </CartContext.Provider>
   );
-}; 
+};
+
+export const useCart = () => {
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error('useCart must be used within a CartProvider');
+  }
+  return context;
+};

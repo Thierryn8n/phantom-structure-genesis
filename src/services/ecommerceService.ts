@@ -871,6 +871,18 @@ export class EcommerceService {
       return emptyDashboardData;
     }
   }
+
+  static async updateOrderStatus(orderId: string, status: string): Promise<void> {
+    const { error } = await supabase
+      .from('orders_kanban')
+      .update({ status })
+      .eq('id', orderId);
+
+    if (error) {
+      console.error('Erro ao atualizar status do pedido:', error);
+      throw new Error('Erro ao atualizar status do pedido');
+    }
+  }
   // =============================================================================================
 }
 
