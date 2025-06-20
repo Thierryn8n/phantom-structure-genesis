@@ -1,3 +1,4 @@
+
 import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import App from "@/App";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -24,10 +25,8 @@ import Wishlist from "@/pages/ecommerce/Wishlist";
 import SearchResults from "@/pages/ecommerce/SearchResults";
 
 // Importações do Painel do E-commerce
-import EcommerceDashboardLayout from "@/components/ecommerce/EcommerceDashboardLayout";
 import EcommerceDashboard from "@/pages/ecommerce/Dashboard";
 import OrdersKanban from "@/pages/ecommerce/OrdersKanban";
-// Removida importação do Products que não existe
 import EcommerceCategories from "@/pages/ecommerce/Categories";
 import EcommerceCustomers from "@/pages/ecommerce/Customers";
 import EcommerceSettings from "@/pages/ecommerce/Settings";
@@ -105,19 +104,26 @@ export const router = createBrowserRouter([
         element: <ProtectedRoute><Reports /></ProtectedRoute> 
       },
 
-      // Rotas do Painel do E-commerce (com autenticação)
-      {
-        path: "ecommerce-admin",
-        element: <ProtectedRoute><EcommerceDashboardLayout><Outlet /></EcommerceDashboardLayout></ProtectedRoute>,
-        children: [
-          { index: true, element: <Navigate to="dashboard" replace /> },
-          { path: "dashboard", element: <EcommerceDashboard /> },
-          { path: "orders", element: <OrdersKanban /> },
-          { path: "products", element: <Navigate to="dashboard" replace /> },
-          { path: "categories", element: <EcommerceCategories /> },
-          { path: "customers", element: <EcommerceCustomers /> },
-          { path: "settings", element: <EcommerceSettings /> },
-        ],
+      // Rotas do Painel do E-commerce (com autenticação) - usando layout padrão
+      { 
+        path: "ecommerce-admin/dashboard", 
+        element: <ProtectedRoute><EcommerceDashboard /></ProtectedRoute> 
+      },
+      { 
+        path: "ecommerce-admin/orders", 
+        element: <ProtectedRoute><OrdersKanban /></ProtectedRoute> 
+      },
+      { 
+        path: "ecommerce-admin/categories", 
+        element: <ProtectedRoute><EcommerceCategories /></ProtectedRoute> 
+      },
+      { 
+        path: "ecommerce-admin/customers", 
+        element: <ProtectedRoute><EcommerceCustomers /></ProtectedRoute> 
+      },
+      { 
+        path: "ecommerce-admin/settings", 
+        element: <ProtectedRoute><EcommerceSettings /></ProtectedRoute> 
       },
     ],
   },
