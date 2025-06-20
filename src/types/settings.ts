@@ -32,6 +32,12 @@ export interface PrinterSettings {
   [key: string]: any; // Allow additional properties for JSON compatibility
 }
 
+export interface EcommerceSettings {
+  enabled: boolean;
+  admin_panel_enabled: boolean;
+  [key: string]: any; // Allow additional properties for JSON compatibility
+}
+
 export interface UserSettings {
   id?: string;
   user_id?: string;
@@ -39,6 +45,7 @@ export interface UserSettings {
   installment_fees: InstallmentFee[];
   delivery_settings: DeliverySettings;
   printer_settings: PrinterSettings;
+  ecommerce_settings?: EcommerceSettings;
   created_at?: string;
   updated_at?: string;
-} 
+}

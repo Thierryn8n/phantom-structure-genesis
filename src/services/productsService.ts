@@ -6,7 +6,7 @@ export interface Product {
   code: string;
   price: number;
   description?: string;
-  imageUrl?: string;
+  imageurl?: string;
   image_path?: string;
   ncm?: string;
   unit?: string;
@@ -26,38 +26,42 @@ export const ProductsService = {
    * @param pageSize Tamanho da página
    * @returns Lista de produtos e contagem total
    */
-  async getUserProducts(userId: string, page = 0, pageSize = 1000) {
-    console.log(`[ProductsService] Iniciando getUserProducts para userId: ${userId}, página: ${page}, pageSize: ${pageSize}`);
+  async getUserProducts(userId: string, page = 0, pageSize?: number) {
+    console.log(`[ProductsService] Iniciando getUserProducts para userId: ${userId}, página: ${page}, pageSize: ${pageSize || 'todos'}`);
 
     if (!userId) {
       console.error('[ProductsService] ERRO: userId não fornecido para getUserProducts.');
-      throw new Error('UserID é obrigatório para buscar produtos.');
+      throw new Error('userId é obrigatório para buscar produtos do usuário');
     }
 
     try {
-      // Log de diagnóstico: verificar a contagem total de produtos (sem filtro de owner_id)
-      // Isso ajuda a entender se a tabela 'products' está acessível e tem dados
-      // do ponto de vista da sessão atual (considerando RLS gerais, se houver).
-      const { count: totalCountInTable, error: countError } = await supabase
+      // Diagnóstico: contar total de produtos na tabela
+      console.log('[ProductsService] Executando diagnóstico: contando total de produtos na tabela...');
+      const { count: totalProductsInTable, error: countError } = await supabase
         .from('products')
         .select('*', { count: 'exact', head: true });
-
+      
       if (countError) {
-        console.error(`[ProductsService] Erro ao tentar contar todos os produtos (diagnóstico):`, countError);
-        // Não lançar erro aqui, continuar para a consulta principal, mas logar.
+        console.error('[ProductsService] Erro ao contar produtos na tabela:', countError);
       } else {
-        console.log(`[ProductsService] Diagnóstico: Contagem total de produtos na tabela (sem filtro owner_id): ${totalCountInTable}`);
+        console.log(`[ProductsService] Total de produtos na tabela: ${totalProductsInTable}`);
       }
       
-      // Buscar produtos com paginação e filtro por owner_id
+      // Buscar produtos com ou sem paginação baseado no pageSize
       console.log(`[ProductsService] Executando consulta para owner_id: ${userId}`);
-      const startIndex = page * pageSize;
-      const { data, error, count } = await supabase
+      let query = supabase
         .from('products')
         .select('*', { count: 'exact' })
         .eq('owner_id', userId)
-        .range(startIndex, startIndex + pageSize - 1)
         .order('created_at', { ascending: false });
+      
+      // Aplicar paginação apenas se pageSize for especificado
+      if (pageSize && pageSize > 0) {
+        const startIndex = page * pageSize;
+        query = query.range(startIndex, startIndex + pageSize - 1);
+      }
+      
+      const { data, error, count } = await query;
 
       if (error) {
         console.error(`[ProductsService] Erro ao buscar produtos para owner_id ${userId}:`, error);
@@ -236,10 +240,66 @@ export const ProductsService = {
   },
   
   /**
+   * Busca produtos com filtro de texto
+   * @param userId ID do proprietário dos produtos
+   * @param searchTerm Termo de busca
+   * @param page Página atual (começando em 0)
+   * @param pageSize Tamanho da página
+   * @returns Lista de produtos filtrados e contagem total
+   */
+  async searchUserProducts(userId: string, searchTerm: string, page = 0, pageSize = 20) {
+    console.log(`[ProductsService] Iniciando searchUserProducts para userId: ${userId}, termo: "${searchTerm}", página: ${page}, pageSize: ${pageSize}`);
+
+    if (!userId) {
+      console.error('[ProductsService] ERRO: userId não fornecido para searchUserProducts.');
+      throw new Error('userId é obrigatório para buscar produtos do usuário');
+    }
+
+    try {
+      let query = supabase
+        .from('products')
+        .select('*', { count: 'exact' })
+        .eq('owner_id', userId)
+        .order('created_at', { ascending: false });
+      
+      // Aplicar filtro de busca se fornecido
+      if (searchTerm && searchTerm.trim()) {
+        const searchTermLower = searchTerm.toLowerCase();
+        query = query.or(`name.ilike.%${searchTermLower}%,code.ilike.%${searchTermLower}%,ncm.ilike.%${searchTermLower}%,description.ilike.%${searchTermLower}%`);
+      }
+      
+      // Aplicar paginação
+      const startIndex = page * pageSize;
+      query = query.range(startIndex, startIndex + pageSize - 1);
+      
+      const { data, error, count } = await query;
+
+      if (error) {
+        console.error(`[ProductsService] Erro ao buscar produtos para owner_id ${userId}:`, error);
+        throw error;
+      }
+
+      const productsFound = data || [];
+      const totalMatchingProducts = count || 0;
+
+      console.log(`[ProductsService] Encontrados ${productsFound.length} produtos de ${totalMatchingProducts} no total para busca "${searchTerm}"`);
+
+      return {
+        products: productsFound,
+        count: totalMatchingProducts,
+        hasMore: productsFound.length === pageSize && totalMatchingProducts > (page + 1) * pageSize
+      };
+    } catch (error) {
+      console.error(`[ProductsService] Exceção em searchUserProducts:`, error);
+      throw error;
+    }
+  },
+
+  /**
    * Faz upload de uma imagem de produto
-   * @param userId ID do usuário proprietário
+   * @param userId ID do usuário
    * @param file Arquivo de imagem
-   * @returns Caminho da imagem no storage
+   * @returns URL pública da imagem
    */
   async uploadProductImage(userId: string, file: File) {
     console.log(`[ProductsService] Iniciando uploadProductImage para userId: ${userId}`, file.name);
@@ -264,10 +324,16 @@ export const ProductsService = {
         throw error;
       }
       
-      return filePath;
+      // Gerar URL pública da imagem
+      const { data: publicUrlData } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(filePath);
+      
+      console.log(`[ProductsService] Upload concluído. URL pública: ${publicUrlData.publicUrl}`);
+      return publicUrlData.publicUrl;
     } catch (error) {
       console.error('Erro no serviço de produtos:', error);
       throw error;
     }
   }
-}; 
+};

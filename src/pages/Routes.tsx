@@ -13,6 +13,7 @@ import CustomersManagement from "@/pages/CustomersManagement";
 import Print from "@/pages/Print";
 import Reports from "@/pages/Reports";
 import NewNote from "@/pages/NewNote";
+import ViewNote from "@/pages/ViewNote";
 
 // Importações do E-commerce
 import EcommerceLayout from "@/components/ecommerce/EcommerceLayout";
@@ -77,6 +78,14 @@ export const router = createBrowserRouter([
       },
       { 
         path: "notes/new", 
+        element: <ProtectedRoute><NewNote /></ProtectedRoute> 
+      },
+      { 
+        path: "notes/:id", 
+        element: <ProtectedRoute><ViewNote /></ProtectedRoute> 
+      },
+      { 
+        path: "notes/edit/:id", 
         element: <ProtectedRoute><NewNote /></ProtectedRoute> 
       },
       { 

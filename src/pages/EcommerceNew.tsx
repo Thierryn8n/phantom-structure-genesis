@@ -16,7 +16,8 @@ import {
   RefreshCw,
   Check,
   ArrowLeft,
-  ArrowRight
+  ArrowRight,
+  Camera
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -31,6 +32,7 @@ import { loadGoogleFont } from '@/utils/loadGoogleFont';
 import { useAuth } from '@/contexts/AuthContext';
 import { applyStoreTheme } from '@/utils/applyStoreTheme';
 import WhatsAppFloatingButton from '@/components/ecommerce/WhatsAppFloatingButton';
+import GoogleImageSearchPopup from '@/components/ecommerce/GoogleImageSearchPopup';
 
 // Importações do Swiper
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -62,6 +64,10 @@ const EcommerceNew: React.FC = () => {
   // Estado para o carrossel de produtos em destaque mobile
   const [currentFeaturedMobilePage, setCurrentFeaturedMobilePage] = useState(0);
   const ITEMS_PER_MOBILE_FEATURED_PAGE = 2;
+  
+  // Estados para o popup de pesquisa de imagens
+  const [isImageSearchOpen, setIsImageSearchOpen] = useState(false);
+  const [selectedProductForImage, setSelectedProductForImage] = useState<EcommerceProduct | null>(null);
   
   // Função para configurar o favicon dinamicamente
   const setFavicon = useCallback((faviconUrl: string) => {
@@ -224,6 +230,37 @@ const EcommerceNew: React.FC = () => {
   const handleViewProduct = useCallback((product: EcommerceProduct) => {
     navigate(`/products/${product.id}`);
   }, [navigate]);
+  
+  // Abrir popup de pesquisa de imagens
+  const handleOpenImageSearch = useCallback((product: EcommerceProduct) => {
+    setSelectedProductForImage(product);
+    setIsImageSearchOpen(true);
+  }, []);
+  
+  // Fechar popup de pesquisa de imagens
+  const handleCloseImageSearch = useCallback(() => {
+    setIsImageSearchOpen(false);
+    setSelectedProductForImage(null);
+  }, []);
+  
+  // Atualizar imagem do produto
+  const handleImageSelected = useCallback((imageUrl: string) => {
+    if (selectedProductForImage) {
+      // Atualizar o produto na lista local
+      setProducts(prevProducts => 
+        prevProducts.map(p => 
+          p.id === selectedProductForImage.id 
+            ? { ...p, imageUrl }
+            : p
+        )
+      );
+      
+      toast({
+        title: 'Sucesso!',
+        description: 'Imagem do produto atualizada com sucesso.',
+      });
+    }
+  }, [selectedProductForImage, toast]);
   
   // Carregar mais produtos - com useCallback
   const loadMoreProducts = useCallback(() => {
@@ -881,6 +918,22 @@ const EcommerceNew: React.FC = () => {
                         {product.category}
                       </Badge>
                     )}
+                    
+                    {/* Botão de pesquisa de imagens */}
+                    {user && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="absolute top-2 right-2 p-2 h-8 w-8 bg-white/90 hover:bg-white shadow-md"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenImageSearch(product);
+                        }}
+                        title="Buscar imagem no Google"
+                      >
+                        <Camera size={14} />
+                      </Button>
+                    )}
                   </div>
                   
                   <div className="p-3 flex flex-col flex-1">
@@ -1000,8 +1053,18 @@ const EcommerceNew: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* Popup de pesquisa de imagens do Google */}
+      {selectedProductForImage && (
+        <GoogleImageSearchPopup
+          isOpen={isImageSearchOpen}
+          onClose={handleCloseImageSearch}
+          product={selectedProductForImage}
+          onImageSelected={handleImageSelected}
+        />
+      )}
     </StoreLayout>
   );
 };
 
-export default EcommerceNew; 
+export default EcommerceNew;

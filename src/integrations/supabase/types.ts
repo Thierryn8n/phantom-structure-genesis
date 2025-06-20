@@ -68,7 +68,7 @@ export type Database = {
           price: number;
           description?: string;
           image_path?: string;
-          imageUrl?: string;
+          imageurl?: string;
           ncm?: string;
           unit?: string;
           quantity?: number;
@@ -127,4 +127,4 @@ export type Database = {
       };
     };
   };
-}; 
+};

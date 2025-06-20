@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import Layout from '@/components/Layout';
 import { SettingsService } from '@/services/settings.service';
-import { UserSettings, CompanyData, InstallmentFee, DeliveryRadius, PrinterSettings } from '@/types/settings';
+import { UserSettings, CompanyData, InstallmentFee, DeliveryRadius, PrinterSettings, EcommerceSettings } from '@/types/settings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { PlusCircle, Trash2, Save, Building, CreditCard, MapPin, Printer, Info } from "lucide-react";
+import { PlusCircle, Trash2, Save, Building, CreditCard, MapPin, Printer, Info, Store } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -30,6 +30,10 @@ const defaultSettings: UserSettings = {
   printer_settings: {
     default_printer: '',
     auto_print: false,
+  },
+  ecommerce_settings: {
+    enabled: false,
+    admin_panel_enabled: false
   },
 };
 
@@ -93,6 +97,10 @@ export default function Settings() {
 
       if (result) {
         setSettings(result);
+        
+        // Dispatch custom event to notify Layout component about ecommerce settings change
+        window.dispatchEvent(new CustomEvent('ecommerceSettingsUpdated'));
+        
         toast({
           title: "Configurações salvas",
           description: "Suas configurações foram salvas com sucesso.",
@@ -204,6 +212,16 @@ export default function Settings() {
     }));
   };
 
+  const updateEcommerceSettings = (field: keyof EcommerceSettings, value: any) => {
+    setSettings(prev => ({
+      ...prev,
+      ecommerce_settings: {
+        ...prev.ecommerce_settings,
+        [field]: value
+      }
+    }));
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -267,6 +285,13 @@ export default function Settings() {
               >
                   <Printer size={16} />
                 Impressora
+              </TabsTrigger>
+              <TabsTrigger 
+                value="ecommerce" 
+                  className="data-[state=active]:bg-fiscal-green-50 data-[state=active]:text-fiscal-green-700 data-[state=active]:font-medium data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-fiscal-green-300 bg-slate-50 transition-all duration-200 rounded-xl mx-0.5 border border-transparent hover:border-gray-200 text-sm flex items-center justify-center gap-1.5 py-2 flex-1 whitespace-nowrap"
+              >
+                  <Store size={16} />
+                E-commerce
               </TabsTrigger>
             </TabsList>
           </div>
@@ -565,9 +590,75 @@ export default function Settings() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Ecommerce Tab */}
+          <TabsContent value="ecommerce">
+              <Card className="shadow-sm border border-gray-300 rounded-[20px] overflow-hidden bg-white">
+              <CardHeader className="bg-gray-50 p-5 border-b border-gray-200">
+                <CardTitle className="text-xl font-semibold text-gray-700">Configurações do E-commerce</CardTitle>
+                <CardDescription className="text-sm text-gray-500 pt-1">
+                  Gerencie as configurações da sua loja virtual e painel administrativo.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6 space-y-6">
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-gray-50">
+                    <div className="flex-1">
+                      <h3 className="text-sm font-medium text-gray-700">Habilitar E-commerce</h3>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Ative ou desative a funcionalidade de loja virtual do sistema.
+                      </p>
+                    </div>
+                    <Switch
+                      id="ecommerce-enabled"
+                      checked={settings.ecommerce_settings?.enabled || false}
+                      onCheckedChange={(checked) => updateEcommerceSettings('enabled', checked)}
+                      className="data-[state=checked]:bg-green-600 data-[state=unchecked]:bg-gray-200"
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-gray-50">
+                    <div className="flex-1">
+                      <h3 className="text-sm font-medium text-gray-700">Painel Administrativo do E-commerce</h3>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Habilite o acesso ao painel de administração da loja virtual.
+                      </p>
+                    </div>
+                    <Switch
+                      id="admin-panel-enabled"
+                      checked={settings.ecommerce_settings?.admin_panel_enabled || false}
+                      onCheckedChange={(checked) => updateEcommerceSettings('admin_panel_enabled', checked)}
+                      disabled={!settings.ecommerce_settings?.enabled}
+                      className="data-[state=checked]:bg-green-600 data-[state=unchecked]:bg-gray-200 disabled:opacity-50"
+                    />
+                  </div>
+
+                  {!settings.ecommerce_settings?.enabled && (
+                    <Alert variant="default" className="bg-blue-50 border-blue-300 text-blue-700">
+                      <Info className="h-5 w-5 text-blue-600" />
+                      <AlertTitle className="font-medium">E-commerce Desabilitado</AlertTitle>
+                      <AlertDescription className="text-sm">
+                        Para acessar o painel administrativo, primeiro habilite o e-commerce.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {settings.ecommerce_settings?.enabled && settings.ecommerce_settings?.admin_panel_enabled && (
+                    <Alert variant="default" className="bg-green-50 border-green-300 text-green-700">
+                      <Store className="h-5 w-5 text-green-600" />
+                      <AlertTitle className="font-medium">E-commerce Ativo</AlertTitle>
+                      <AlertDescription className="text-sm">
+                        Sua loja virtual e painel administrativo estão habilitados e funcionando.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
         </div>
       </div>
     </Layout>
   );
-} 
+}

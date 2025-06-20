@@ -45,15 +45,16 @@ export async function getPublicProducts(
   category_id?: string
 ) {
   try {
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit - 1;
-    
     let query = supabasePublic
       .from('products')
       .select('*', { count: 'exact' });
     
-    // Configurar range para paginação
-    query = query.range(startIndex, endIndex);
+    // Configurar range para paginação apenas se limit não for -1 (buscar todos)
+    if (limit > 0) {
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit - 1;
+      query = query.range(startIndex, endIndex);
+    }
     
     // Adicionar filtros se necessário
     if (searchTerm) {

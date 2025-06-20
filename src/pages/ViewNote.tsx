@@ -4,6 +4,7 @@ import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { NotesService } from '@/services/notesService';
+import { PrintService } from '@/services/printService';
 import { FiscalNote } from '@/types/FiscalNote';
 import PrintableNote from '@/components/fiscal/PrintableNote';
 import { useReactToPrint } from 'react-to-print';
@@ -12,14 +13,17 @@ import { SelectedProduct } from '@/components/fiscal/ProductSelector';
 import { PaymentData } from '@/components/fiscal/PaymentForm';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useDeviceDetect } from '@/hooks/useDeviceDetect';
 
 const ViewNote: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { isMobile } = useDeviceDetect();
   const [note, setNote] = useState<FiscalNote | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const printableNoteRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -55,8 +59,60 @@ const ViewNote: React.FC = () => {
     fetchNote();
   }, [id, user, toast, navigate]);
 
-  // Função de impressão
-  const handlePrint = useReactToPrint({
+  // Função de impressão unificada
+  const handlePrint = async () => {
+    if (!note || !user) return;
+
+    if (isMobile) {
+      // Em dispositivos móveis, enviar para a tabela print_requests
+      setIsSubmitting(true);
+      try {
+        const printRequest = await PrintService.sendPrintRequest(
+          note.id,
+          {
+            id: note.id,
+            noteNumber: note.noteNumber,
+            date: note.date,
+            products: note.products,
+            customerData: note.customerData,
+            paymentData: note.paymentData,
+            totalValue: note.totalValue,
+            status: note.status,
+            ownerId: note.ownerId
+          },
+          user.id
+        );
+
+        if (printRequest) {
+          toast({
+            title: 'Enviado para impressão',
+            description: `Orçamento #${note.noteNumber} foi enviado para a fila de impressão.`,
+          });
+        } else {
+          toast({
+            title: 'Erro ao enviar',
+            description: 'Não foi possível enviar o orçamento para impressão.',
+            variant: 'destructive',
+          });
+        }
+      } catch (error) {
+        console.error('Erro ao enviar para impressão:', error);
+        toast({
+          title: 'Erro',
+          description: 'Ocorreu um erro ao enviar o orçamento para impressão.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
+    } else {
+      // Em desktop, usar impressão local
+      handlePrintLocal();
+    }
+  };
+
+  // Função de impressão local (desktop)
+  const handlePrintLocal = useReactToPrint({
     content: () => printableNoteRef.current,
     documentTitle: note ? `Orçamento ${note.noteNumber}` : 'Orçamento',
     onBeforeGetContent: () => {
@@ -64,7 +120,7 @@ const ViewNote: React.FC = () => {
         resolve();
       });
     },
-    onAfterPrint: () => {
+    onAfterPrint: async () => {
       toast({
         title: 'Impressão concluída',
         description: 'O orçamento foi enviado para a impressora.',
@@ -72,7 +128,27 @@ const ViewNote: React.FC = () => {
       
       // Marcar como impressa após a impressão bem-sucedida
       if (note?.id && user) {
-        NotesService.markAsPrinted(note.id, user.id);
+        try {
+          await NotesService.markAsPrinted(note.id, user.id);
+          // Também enviar para print_requests para manter histórico
+          await PrintService.sendPrintRequest(
+            note.id,
+            {
+              id: note.id,
+              noteNumber: note.noteNumber,
+              date: note.date,
+              products: note.products,
+              customerData: note.customerData,
+              paymentData: note.paymentData,
+              totalValue: note.totalValue,
+              status: 'printed',
+              ownerId: note.ownerId
+            },
+            user.id
+          );
+        } catch (error) {
+          console.error('Erro ao marcar como impressa:', error);
+        }
       }
     }
   });
@@ -205,11 +281,12 @@ const ViewNote: React.FC = () => {
             <Button
               variant="default"
               onClick={handlePrint}
-              className="bg-fiscal-green-600 hover:bg-fiscal-green-700 text-white flex items-center"
+              disabled={isSubmitting}
+              className="bg-fiscal-green-600 hover:bg-fiscal-green-700 text-white flex items-center disabled:opacity-70"
               size="sm"
             >
               <Printer size={16} className="mr-2" />
-              Imprimir
+              {isSubmitting ? 'Enviando...' : (isMobile ? 'Enviar para Impressão' : 'Imprimir')}
             </Button>
           </div>
           
@@ -228,4 +305,4 @@ const ViewNote: React.FC = () => {
   );
 };
 
-export default ViewNote; 
+export default ViewNote;

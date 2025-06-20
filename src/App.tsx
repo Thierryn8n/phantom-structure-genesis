@@ -7,8 +7,6 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import AuthChecker from './components/AuthChecker';
 import PrintMonitor from "@/components/PrintMonitor";
-import Layout from "./components/Layout";
-
 // Create a client
 const queryClient = new QueryClient();
 
@@ -19,9 +17,7 @@ function App() {
       <CartProvider>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
-            <Layout>
-              <Outlet />
-            </Layout>
+            <Outlet />
             <Toaster />
             <PrintMonitor />
           </TooltipProvider>

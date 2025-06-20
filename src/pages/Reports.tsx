@@ -1,10 +1,12 @@
 
 import React from 'react';
 import { BarChart, TrendingUp, Users, DollarSign, Package } from 'lucide-react';
+import Layout from '@/components/Layout';
 
 const Reports: React.FC = () => {
   return (
-    <div className="space-y-6">
+    <Layout>
+      <div className="space-y-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Relatórios</h1>
         <p className="text-gray-600">Visualize dados e métricas do seu negócio</p>
@@ -63,7 +65,8 @@ const Reports: React.FC = () => {
           <p className="text-sm text-gray-400 mt-2">Em breve você poderá visualizar relatórios detalhados aqui</p>
         </div>
       </div>
-    </div>
+      </div>
+    </Layout>
   );
 };
 

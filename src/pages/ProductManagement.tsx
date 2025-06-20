@@ -13,13 +13,13 @@ import { checkAuthAndRLS } from '@/lib/supabaseClient';
 import { useSessionRefresh } from '@/hooks/useSessionRefresh';
 
 // Interface local para uso no componente
-interface Product {
+interface ProductType {
   id: string;
   name: string;
   code: string;
   price: number;
   description?: string;
-  imageUrl?: string;
+  imageurl?: string;
   ncm?: string;
   unit?: string;
   quantity?: number;
@@ -138,18 +138,36 @@ const ProductManagement: React.FC = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [importProgress, setImportProgress] = useState<{current: number, total: number, status: string} | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [productsPerPage] = useState<number>(50);
+  const [productsPerPage] = useState<number>(20);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [isSearching, setIsSearching] = useState(false);
 
   const [formData, setFormData] = useState<Omit<Product, 'id'>>({
     name: '',
     code: '',
     price: 0,
     description: '',
-    imageUrl: '',
+    imageurl: '',
     ncm: '',
     unit: '',
     quantity: 0
   });
+
+  // Preencher formData quando um produto for selecionado para edição
+  useEffect(() => {
+    if (editingProduct) {
+      setFormData({
+        name: editingProduct.name || '',
+        code: editingProduct.code || '',
+        price: editingProduct.price || 0,
+        description: editingProduct.description || '',
+        imageurl: editingProduct.imageurl || '',
+        ncm: editingProduct.ncm || '',
+        unit: editingProduct.unit || '',
+        quantity: editingProduct.quantity || 0
+      });
+    }
+  }, [editingProduct]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -234,20 +252,26 @@ const ProductManagement: React.FC = () => {
           // Continuar mesmo com erro no diagnóstico
         }
 
-        // Buscar os produtos usando o serviço
-        const { products: fetchedProducts, count } = await ProductsService.getUserProducts(userId);
+        // Buscar os produtos usando o serviço com paginação
+        const { products: fetchedProducts, count } = await ProductsService.getUserProducts(
+          userId, 
+          currentPage - 1, // API usa índice baseado em 0
+          productsPerPage
+        );
+        
+        setTotalProducts(count || 0);
         
         if (fetchedProducts && fetchedProducts.length > 0) {
           console.log(`Carregados ${fetchedProducts.length} produtos de um total de ${count}`);
           
-            // Transformar os dados para garantir compatibilidade
+          // Transformar os dados para garantir compatibilidade
           const processedProducts = fetchedProducts.map(p => ({
               id: p.id,
               name: p.name,
               code: p.code,
               price: p.price,
               description: p.description || '',
-              imageUrl: p.image_path || p.imageUrl || '',
+              imageurl: p.image_path || p.imageurl || '',
               ncm: p.ncm || '',
               unit: p.unit || 'UN',
               quantity: typeof p.quantity === 'number' ? p.quantity : 0,
@@ -255,16 +279,18 @@ const ProductManagement: React.FC = () => {
           }));
           
           setProducts(processedProducts);
-          } else {
+        } else {
           console.log('Nenhum produto encontrado.');
           setProducts([]);
           
           // Se o usuário não tem produtos, oferecer adicionar um novo
-          toast({
-            title: 'Sem produtos',
-            description: 'Você ainda não tem produtos cadastrados. Clique em "Novo Produto" para adicionar.',
-            variant: 'info'
-          });
+          if (currentPage === 1 && !searchTerm) {
+            toast({
+              title: 'Sem produtos',
+              description: 'Você ainda não tem produtos cadastrados. Clique em "Novo Produto" para adicionar.',
+              variant: 'info'
+            });
+          }
         }
       } catch (error) {
         console.error('Erro ao carregar produtos:', error);
@@ -292,7 +318,77 @@ const ProductManagement: React.FC = () => {
     }, 60000); // Verificar a cada minuto quando a página estiver visível
     
     return () => clearInterval(sessionCheckInterval);
-  }, [user, toast, checkActiveSession, refreshSession]);
+  }, [user, toast, checkActiveSession, refreshSession, currentPage]);
+
+  // Função para buscar produtos com filtro
+  const searchProducts = async (term: string, page = 1) => {
+    if (!user) return;
+    
+    setIsSearching(true);
+    setIsLoading(true);
+    
+    try {
+      const { products: fetchedProducts, count } = await ProductsService.searchUserProducts(
+        user.id,
+        term,
+        page - 1, // API usa índice baseado em 0
+        productsPerPage
+      );
+      
+      setTotalProducts(count || 0);
+      
+      // Transformar os dados para garantir compatibilidade
+      const processedProducts = fetchedProducts.map(p => ({
+        id: p.id,
+        name: p.name,
+        code: p.code,
+        price: p.price,
+        description: p.description || '',
+        imageurl: p.image_path || p.imageurl || '',
+        ncm: p.ncm || '',
+        unit: p.unit || 'UN',
+        quantity: typeof p.quantity === 'number' ? p.quantity : 0,
+        total: p.total || 0
+      }));
+      
+      setProducts(processedProducts);
+      
+      console.log(`Busca "${term}": ${fetchedProducts.length} produtos encontrados de ${count} total`);
+    } catch (error) {
+      console.error('Erro ao buscar produtos:', error);
+      toast({
+        title: 'Erro na busca',
+        description: 'Não foi possível buscar os produtos. Tente novamente.',
+        variant: 'error'
+      });
+    } finally {
+      setIsLoading(false);
+      setIsSearching(false);
+    }
+  };
+
+  // Effect para busca com debounce
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchTerm.trim()) {
+        setCurrentPage(1); // Reset para primeira página ao buscar
+        searchProducts(searchTerm, 1);
+      } else {
+        // Se não há termo de busca, recarregar produtos normais
+        setCurrentPage(1);
+        // O useEffect principal vai recarregar os produtos
+      }
+    }, 500); // Debounce de 500ms
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
+  // Effect para busca paginada quando há termo de busca
+  useEffect(() => {
+    if (searchTerm.trim() && currentPage > 1) {
+      searchProducts(searchTerm, currentPage);
+    }
+  }, [currentPage, searchTerm]);
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -364,8 +460,8 @@ const ProductManagement: React.FC = () => {
       
       // Tratar upload de imagem se houver
       if (imageFile) {
-        const filePath = await ProductsService.uploadProductImage(userId, imageFile);
-        newProduct.image_path = filePath;
+        const imageUrl = await ProductsService.uploadProductImage(userId, imageFile);
+        newProduct.imageurl = imageUrl;
       }
 
       // Adicionar produto usando o serviço
@@ -385,7 +481,7 @@ const ProductManagement: React.FC = () => {
           code: addedProduct.code,
           price: addedProduct.price,
           description: addedProduct.description || '',
-          imageUrl: addedProduct.image_path || '',
+          imageurl: addedProduct.imageurl || '',
           ncm: addedProduct.ncm || '',
           unit: addedProduct.unit || 'UN',
           quantity: addedProduct.quantity || 0,
@@ -400,7 +496,7 @@ const ProductManagement: React.FC = () => {
         code: '',
         price: 0,
         description: '',
-        imageUrl: '',
+        imageurl: '',
         ncm: '',
         unit: '',
         quantity: 0
@@ -540,8 +636,8 @@ const ProductManagement: React.FC = () => {
       
       // Tratar upload de imagem se houver
       if (imageFile) {
-        const filePath = await ProductsService.uploadProductImage(userId, imageFile);
-        productToUpdate.image_path = filePath;
+        const imageUrl = await ProductsService.uploadProductImage(userId, imageFile);
+        productToUpdate.imageurl = imageUrl;
       }
       
       // Atualizar produto usando o serviço
@@ -556,7 +652,7 @@ const ProductManagement: React.FC = () => {
               code: formData.code,
               price: formData.price,
               description: formData.description || '',
-              imageUrl: imageFile ? URL.createObjectURL(imageFile) : formData.imageUrl || '',
+              imageurl: imageFile ? (productToUpdate.imageurl || '') : formData.imageurl || '',
               ncm: formData.ncm || '',
               unit: formData.unit || '',
               quantity: formData.quantity
@@ -968,7 +1064,7 @@ const ProductManagement: React.FC = () => {
                     code: '',
                     price: 0,
                     description: '',
-                    imageUrl: '',
+                    imageurl: '',
                     ncm: '',
                     unit: '',
                     quantity: 0
@@ -1153,15 +1249,15 @@ const ProductManagement: React.FC = () => {
               </div>
               
               <div>
-                <label htmlFor="edit-imageUrl" className="block text-sm font-medium text-gray-700 mb-1">
-                  URL da Imagem
-                </label>
-                <input
-                  type="url"
-                  id="edit-imageUrl"
-                  name="imageUrl"
-                  value={editingProduct?.imageUrl || ''}
-                  onChange={(e) => setEditingProduct({ ...editingProduct, imageUrl: e.target.value })}
+                <label htmlFor="edit-imageurl" className="block text-sm font-medium text-gray-700 mb-1">
+          URL da Imagem
+        </label>
+        <input
+          type="url"
+          id="edit-imageurl"
+          name="imageurl"
+          value={editingProduct?.imageurl || ''}
+          onChange={(e) => setEditingProduct({ ...editingProduct, imageurl: e.target.value })}
                   className={inputStyles}
                   placeholder="https://exemplo.com/imagem.jpg (opcional)"
                 />
@@ -1179,9 +1275,9 @@ const ProductManagement: React.FC = () => {
                   onChange={(e) => setImageFile(e.target.files?.[0] || null)}
                   className="w-full px-4 py-2 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-fiscal-green-500 focus:border-fiscal-green-500 transition-colors"
                 />
-                {editingProduct?.imageUrl && (
-                  <div className="mt-2">
-                    <img src={editingProduct.imageUrl} alt="Imagem atual" className="h-20 w-20 object-cover rounded-xl border border-gray-200" />
+                {editingProduct?.imageurl && (
+          <div className="mt-2">
+            <img src={editingProduct.imageurl} alt="Imagem atual" className="h-20 w-20 object-cover rounded-xl border border-gray-200" />
                     <p className="text-xs text-gray-500">Imagem atual</p>
                   </div>
                 )}
@@ -1364,15 +1460,15 @@ const ProductManagement: React.FC = () => {
                 </div>
                 
               <div>
-                <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700 mb-1">
-                  URL da Imagem
-                </label>
-                  <input
-                    type="url"
-                    id="imageUrl"
-                    name="imageUrl"
-                    value={formData.imageUrl}
-                    onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                <label htmlFor="imageurl" className="block text-sm font-medium text-gray-700 mb-1">
+          URL da Imagem
+        </label>
+        <input
+          type="url"
+          id="imageurl"
+          name="imageurl"
+          value={formData.imageurl}
+          onChange={(e) => setFormData({ ...formData, imageurl: e.target.value })}
                   className={inputStyles}
                   placeholder="https://exemplo.com/imagem.jpg (opcional)"
                   />
@@ -1426,10 +1522,7 @@ const ProductManagement: React.FC = () => {
                 type="text"
                 placeholder="Buscar por nome, código ou NCM..."
                 value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1); // Voltar para a primeira página ao pesquisar
-                }}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full py-2.5 pl-10 pr-4 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-fiscal-green-500 focus:border-fiscal-green-500 transition-colors"
               />
             </div>
@@ -1439,7 +1532,7 @@ const ProductManagement: React.FC = () => {
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-medium">Lista de Produtos</h3>
             <span className="text-sm text-gray-500">
-              {products.length} produtos
+              {searchTerm ? `${products.length} de ${totalProducts} produtos` : `${totalProducts} produtos`}
             </span>
           </div>
           
@@ -1470,31 +1563,13 @@ const ProductManagement: React.FC = () => {
             </div>
           )}
           
-          {/* Implementar lógica de filtro para a pesquisa */}
+          {/* Exibição dos produtos */}
           {(() => {
-            // Filtrar produtos com base no termo de pesquisa
-            const filteredProducts = products.filter(product => {
-              const searchTermLower = searchTerm.toLowerCase();
-              return (
-                // Pesquisar por nome
-                (product.name && product.name.toLowerCase().includes(searchTermLower)) ||
-                // Pesquisar por código
-                (product.code && product.code.toLowerCase().includes(searchTermLower)) ||
-                // Pesquisar por NCM
-                (product.ncm && product.ncm.toLowerCase().includes(searchTermLower)) ||
-                // Pesquisar por descrição
-                (product.description && product.description.toLowerCase().includes(searchTermLower))
-              );
-            });
-
-            // Calcular paginação
-            const indexOfLastProduct = currentPage * productsPerPage;
-            const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-            const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
-            const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+            // Calcular total de páginas baseado no backend
+            const totalPages = Math.ceil(totalProducts / productsPerPage);
 
             // Mostrar mensagem quando não há resultados para a pesquisa
-            if (searchTerm && filteredProducts.length === 0) {
+            if (searchTerm && products.length === 0 && !isLoading) {
               return (
                 <div className="flex flex-col items-center justify-center py-10 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-300">
                   <Search size={40} className="mb-2 opacity-40" />
@@ -1505,16 +1580,16 @@ const ProductManagement: React.FC = () => {
             }
             
             // Exibir produtos ou mensagem de nenhum produto cadastrado
-            return filteredProducts.length === 0 ? (
+            return products.length === 0 && !isLoading ? (
               <div className="flex flex-col items-center justify-center py-10 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-300">
                 <Package size={40} className="mb-2 opacity-40" />
                 <p>Nenhum produto cadastrado</p>
-              <p className="text-sm mt-1">Clique em "Novo Produto" para adicionar ou importe um arquivo CSV.</p>
+                <p className="text-sm mt-1">Clique em "Novo Produto" para adicionar ou importe um arquivo CSV.</p>
               </div>
             ) : (
               <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {currentProducts.map(product => (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {products.map(product => (
                   <div 
                     key={product.id} 
                     className="relative border border-gray-200 rounded-xl p-4 hover:border-fiscal-green-100 hover:bg-fiscal-green-50 transition-all duration-200"
@@ -1530,9 +1605,9 @@ const ProductManagement: React.FC = () => {
                   
                   <div className="flex items-start ml-6">
                     <div className="flex-shrink-0 bg-gray-100 w-14 h-14 rounded-md flex items-center justify-center mr-3">
-                      {product.imageUrl ? (
-                          <img 
-                            src={product.imageUrl} 
+                      {product.imageurl ? (
+                        <img
+                          src={product.imageurl} 
                             alt={product.name} 
                           className="w-full h-full object-cover rounded-md"
                             onError={(e) => {
@@ -1671,7 +1746,7 @@ const ProductManagement: React.FC = () => {
                 
                 {/* Informação sobre a paginação */}
                 <div className="text-center text-sm text-gray-500 mt-2">
-                  Mostrando {indexOfFirstProduct + 1}-{Math.min(indexOfLastProduct, filteredProducts.length)} de {filteredProducts.length} produtos
+                  Mostrando {((currentPage - 1) * productsPerPage) + 1}-{Math.min(currentPage * productsPerPage, totalProducts)} de {totalProducts} produtos
                 </div>
               </>
             );

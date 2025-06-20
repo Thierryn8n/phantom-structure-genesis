@@ -15,6 +15,21 @@ BEGIN
 END
 $$;
 
+-- Adicionar a coluna imageUrl se ela não existir
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+    AND table_name = 'products'
+    AND column_name = 'imageUrl'
+  ) THEN
+    ALTER TABLE products ADD COLUMN "imageUrl" VARCHAR(255);
+  END IF;
+END
+$$;
+
 -- Adicionar o índice para NCM
 DO $$
 BEGIN
@@ -69,4 +84,4 @@ EXECUTE FUNCTION update_updated_at_column();
 -- Atualizar registros existentes calculando o total
 UPDATE products
 SET total = price * quantity
-WHERE total IS NULL AND price IS NOT NULL AND quantity IS NOT NULL; 
+WHERE total IS NULL AND price IS NOT NULL AND quantity IS NOT NULL;

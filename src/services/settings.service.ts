@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { UserSettings, CompanyData, DeliverySettings, InstallmentFee, PrinterSettings } from '@/types/settings';
+import { UserSettings, CompanyData, DeliverySettings, InstallmentFee, PrinterSettings, EcommerceSettings } from '@/types/settings';
 
 export const SettingsService = {
   async getUserSettings(): Promise<UserSettings | null> {
@@ -33,6 +33,7 @@ export const SettingsService = {
         installment_fees: data.installment_fees as unknown as InstallmentFee[],
         delivery_settings: data.delivery_settings as unknown as DeliverySettings,
         printer_settings: data.printer_settings as unknown as PrinterSettings,
+        ecommerce_settings: data.ecommerce_settings as unknown as EcommerceSettings,
         created_at: data.created_at,
         updated_at: data.updated_at
       };
@@ -59,7 +60,8 @@ export const SettingsService = {
           company_data: settings.company_data || {},
           installment_fees: settings.installment_fees || [],
           delivery_settings: settings.delivery_settings || { delivery_radii: [] },
-          printer_settings: settings.printer_settings || { default_printer: '', auto_print: false }
+          printer_settings: settings.printer_settings || { default_printer: '', auto_print: false },
+          ecommerce_settings: settings.ecommerce_settings || { enabled: false, admin_panel_enabled: false }
         }])
         .select()
         .single();
@@ -79,6 +81,7 @@ export const SettingsService = {
         installment_fees: data.installment_fees as unknown as InstallmentFee[],
         delivery_settings: data.delivery_settings as unknown as DeliverySettings,
         printer_settings: data.printer_settings as unknown as PrinterSettings,
+        ecommerce_settings: data.ecommerce_settings as unknown as EcommerceSettings,
         created_at: data.created_at,
         updated_at: data.updated_at
       };
@@ -104,7 +107,8 @@ export const SettingsService = {
           company_data: settings.company_data as any,
           installment_fees: settings.installment_fees as any,
           delivery_settings: settings.delivery_settings as any,
-          printer_settings: settings.printer_settings as any
+          printer_settings: settings.printer_settings as any,
+          ecommerce_settings: settings.ecommerce_settings as any
         })
         .eq('user_id', userId)
         .select()
@@ -125,6 +129,7 @@ export const SettingsService = {
         installment_fees: data.installment_fees as unknown as InstallmentFee[],
         delivery_settings: data.delivery_settings as unknown as DeliverySettings,
         printer_settings: data.printer_settings as unknown as PrinterSettings,
+        ecommerce_settings: data.ecommerce_settings as unknown as EcommerceSettings,
         created_at: data.created_at,
         updated_at: data.updated_at
       };
@@ -168,4 +173,4 @@ export const SettingsService = {
       return null;
     }
   }
-}; 
+};

@@ -30,7 +30,7 @@ export interface EcommerceProduct {
   price: number;
   category_id?: string;
   image_url?: string;
-  imageUrl?: string;
+  imageurl?: string;
   created_at?: string;
   updated_at?: string;
   stock?: number;

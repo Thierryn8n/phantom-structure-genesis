@@ -161,4 +161,4 @@ export const PrintService = {
   getCurrentUserId(): string {
     return localStorage.getItem('default_user_id') || 'guest_user';
   }
-}; 
+};
