@@ -1,20 +1,11 @@
+
 import React, { forwardRef, useEffect, useState } from 'react';
 import { SelectedProduct } from './ProductSelector';
 import { CustomerData } from './CustomerForm';
 import { PaymentData } from './PaymentForm';
 import { useDeviceDetect } from '@/hooks/useDeviceDetect';
-
-interface CompanyData {
-  name: string;
-  cnpj: string;
-  address: string;
-  city?: string;
-  state?: string;
-  zipCode?: string;
-  phone: string;
-  email?: string;
-  logo?: string; // Base64 da imagem do logo
-}
+import { SettingsService } from '@/services/settings.service';
+import { CompanyData } from '@/types/settings';
 
 interface PrintableNoteProps {
   noteNumber: string;
@@ -31,25 +22,42 @@ const PrintableNote = forwardRef<HTMLDivElement, PrintableNoteProps>(
     const [companyData, setCompanyData] = useState<CompanyData>({
       name: 'Empresa Demonstração LTDA',
       cnpj: '12.345.678/0001-90',
-      address: 'Rua Exemplo, 123',
-      city: 'Cidade',
-      state: 'UF',
-      zipCode: '00000-000',
+      address: 'Rua Exemplo, 123, Centro',
       phone: '(11) 1234-5678',
       email: 'contato@empresa.com.br'
     });
 
     useEffect(() => {
-      // Carregar dados da empresa do localStorage quando o componente montar
-      const storedCompanyData = localStorage.getItem('settings_companyData');
-      if (storedCompanyData) {
+      // Carregar dados da empresa do serviço de configurações
+      const loadCompanyData = async () => {
         try {
-          const parsedData = JSON.parse(storedCompanyData);
-          setCompanyData(parsedData);
-        } catch (e) {
-          console.error('Erro ao carregar dados da empresa:', e);
+          const settings = await SettingsService.getUserSettings();
+          if (settings?.company_data) {
+            setCompanyData(settings.company_data);
+          } else {
+            // Fallback para localStorage se não houver dados no serviço
+            const storedCompanyData = localStorage.getItem('settings_companyData');
+            if (storedCompanyData) {
+              const parsedData = JSON.parse(storedCompanyData);
+              setCompanyData(parsedData);
+            }
+          }
+        } catch (error) {
+          console.error('Erro ao carregar dados da empresa:', error);
+          // Tentar carregar do localStorage como fallback
+          const storedCompanyData = localStorage.getItem('settings_companyData');
+          if (storedCompanyData) {
+            try {
+              const parsedData = JSON.parse(storedCompanyData);
+              setCompanyData(parsedData);
+            } catch (e) {
+              console.error('Erro ao parsear dados do localStorage:', e);
+            }
+          }
         }
-      }
+      };
+
+      loadCompanyData();
     }, []);
 
     const formatPaymentMethod = (method: string) => {
@@ -65,17 +73,7 @@ const PrintableNote = forwardRef<HTMLDivElement, PrintableNoteProps>(
 
     // Formatar endereço completo da empresa
     const formatCompanyAddress = () => {
-      const parts = [companyData.address];
-      
-      if (companyData.city && companyData.state) {
-        parts.push(`${companyData.city} - ${companyData.state}`);
-      }
-      
-      if (companyData.zipCode) {
-        parts.push(`CEP: ${companyData.zipCode}`);
-      }
-      
-      return parts.join(', ');
+      return companyData.address || 'Endereço não informado';
     };
 
     return (
@@ -89,10 +87,10 @@ const PrintableNote = forwardRef<HTMLDivElement, PrintableNoteProps>(
       >
         {/* Company Header */}
         <div className="border-b-2 border-black pb-4 mb-4">
-          <div className={`${isMobile ? 'flex flex-col' : 'flex justify-between items-center'}`}>
-            <div className="flex items-center">
+          <div className={`${isMobile ? 'flex flex-col' : 'flex justify-between items-start'}`}>
+            <div className="flex items-start">
               {companyData.logo ? (
-                <div className={`${isMobile ? 'w-12 h-12' : 'w-16 h-16'} flex items-center justify-center overflow-hidden`}>
+                <div className={`${isMobile ? 'w-12 h-12' : 'w-16 h-16'} flex items-center justify-center overflow-hidden mr-4`}>
                   <img 
                     src={companyData.logo} 
                     alt="Logo da empresa" 
@@ -100,25 +98,37 @@ const PrintableNote = forwardRef<HTMLDivElement, PrintableNoteProps>(
                   />
                 </div>
               ) : (
-                <div className={`${isMobile ? 'w-10 h-10' : 'w-12 h-12'} bg-fiscal-green-500 flex items-center justify-center rounded-full`}>
-                  <span className={`${isMobile ? 'text-lg' : 'text-xl'} font-cascadia text-white`}>FF</span>
+                <div className={`${isMobile ? 'w-10 h-10' : 'w-12 h-12'} bg-fiscal-green-500 flex items-center justify-center rounded-full mr-4`}>
+                  <span className={`${isMobile ? 'text-lg' : 'text-xl'} font-cascadia text-white`}>
+                    {companyData.name ? companyData.name.charAt(0).toUpperCase() : 'E'}
+                  </span>
                 </div>
               )}
-              <div className="ml-3">
-                <h1 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-cascadia`}>{companyData.name}</h1>
-                <p className="text-sm">CNPJ: {companyData.cnpj}</p>
+              <div className="flex-1">
+                <h1 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-cascadia font-bold`}>
+                  {companyData.name || 'Nome da Empresa'}
+                </h1>
+                {companyData.cnpj && (
+                  <p className="text-sm font-medium">CNPJ: {companyData.cnpj}</p>
+                )}
               </div>
             </div>
-            <div className={`${isMobile ? 'mt-3 ml-3' : 'text-right'}`}>
-              <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-cascadia`}>ORÇAMENTO</h2>
-              <p className="text-sm">Nº {noteNumber}</p>
+            <div className={`${isMobile ? 'mt-3 ml-3' : 'text-right ml-4'}`}>
+              <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-cascadia font-bold`}>ORÇAMENTO</h2>
+              <p className="text-sm font-medium">Nº {noteNumber}</p>
               <p className="text-sm">Data: {date}</p>
             </div>
           </div>
-          <div className="mt-2 text-sm">
-            <p>{formatCompanyAddress()}</p>
-            <p>Tel: {companyData.phone}</p>
-            {companyData.email && <p>Email: {companyData.email}</p>}
+          
+          {/* Informações completas da empresa */}
+          <div className="mt-4 text-sm space-y-1">
+            <p><strong>Endereço:</strong> {formatCompanyAddress()}</p>
+            {companyData.phone && (
+              <p><strong>Telefone:</strong> {companyData.phone}</p>
+            )}
+            {companyData.email && (
+              <p><strong>Email:</strong> {companyData.email}</p>
+            )}
           </div>
         </div>
 
